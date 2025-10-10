@@ -1,1 +1,10 @@
 
+/* Foooter Styling */
+.site-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: antiquewhite;
+    text-align: justify;
+    padding: 40px;
+}
