@@ -95,20 +95,17 @@
         margin-top: 0.5rem;
       }
     </style>
+    
+    <!-- Web Components for shared navbar and footer layout -->
+    <script type="module" src="/src/components/site-navbar.js"></script>
+    <script type="module" src="/src/components/site-footer.js"></script>
   </head>
 
   <body>
     <!-- Hero Section -->
     <section class="hero-nav">
-      <div class="top-nav">
-        <a href="#">Home</a>
-        <a href="#">Explore</a>
-        <a href="#">Events</a>
-        <a href="#">Community</a>
-        <a href="#">About</a>
-        <button class="btn-login ms-3">Sign In</button>
-      </div>
-
+    <!-- nav bar -->
+     <site-navbar></site-navbar>
       <div class="hero-content">
         <h1 class="hero-title">Hang Out</h1>
         <p class="hero-subtitle">
