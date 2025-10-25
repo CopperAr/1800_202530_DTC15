@@ -18,7 +18,10 @@ class SiteNavbar extends HTMLElement {
         <a href="#">Events</a>
         <a href="#">Community</a>
         <a href="#">About</a>
-        <button class="btn-login ms-3">Sign In</button>
+        <button  
+          onclick="window.location.href='login.html'"
+          type="button"
+          class="btn-login ms-3">Sign In</button>
       </div>
         `;
   }
