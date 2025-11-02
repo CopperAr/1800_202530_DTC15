@@ -17,7 +17,7 @@ class SiteNavbar extends HTMLElement {
         <a href="#">Friends</a>
         <a href="#">Hangouts</a>
         <a href="#">Schedule</a>
-        <a href="#">Profile</a>
+        <a href="profile.html">Profile</a>
         <button  
           onclick="window.location.href='login.html'"
           type="button"
