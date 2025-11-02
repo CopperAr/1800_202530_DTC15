@@ -14,10 +14,10 @@ class SiteNavbar extends HTMLElement {
     this.innerHTML = `
             <div class="top-nav">
         <a href="#">Home</a>
-        <a href="#">Explore</a>
-        <a href="#">Events</a>
-        <a href="#">Community</a>
-        <a href="#">About</a>
+        <a href="#">Friends</a>
+        <a href="#">Hangouts</a>
+        <a href="#">Schedule</a>
+        <a href="profile.html">Profile</a>
         <button  
           onclick="window.location.href='login.html'"
           type="button"
