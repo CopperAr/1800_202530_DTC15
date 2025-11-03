@@ -18,15 +18,13 @@ class SiteNavbar extends HTMLElement {
         <a href="#">Hangouts</a>
         <a href="#">Schedule</a>
         <a href="profile.html">Profile</a>
-        <button  
-          onclick="window.location.href='login.html'"
-          type="button"
-          class="btn-login ms-3">Sign In</button>
+        <div id="authControls" class="ms-3"></div>
       </div>
         `;
   }
   renderAuthControls() {
     const authControls = this.querySelector("#authControls");
+    if (!authControls) return; // Guard if container is missing
 
     // Initialize with invisible placeholder to maintain layout space
     authControls.innerHTML = `<div class="btn btn-outline-light" style="visibility: hidden; min-width: 80px;">Log out</div>`;
