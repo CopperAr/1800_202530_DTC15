@@ -7,6 +7,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // ---------------------------------------------------------
 // Read Firebase configuration from Vite environment variables.
@@ -26,3 +27,4 @@ const firebaseConfig = {
 // Initialize Firebase app and export Auth instance
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);

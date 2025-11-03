@@ -7,7 +7,7 @@
 // -------------------------------------------------------------
 
 // Import the initialized Firebase Authentication object
-import { auth } from "/src/firebaseConfig.js";
+import { auth, db } from "/src/firebaseConfig.js";
 
 // Import specific functions from the Firebase Auth SDK
 import {
@@ -17,6 +17,7 @@ import {
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // -------------------------------------------------------------
 // loginUser(email, password)
@@ -32,7 +33,24 @@ import {
 //   await loginUser("user@example.com", "password123");
 // -------------------------------------------------------------
 export async function loginUser(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  // Persist last login time in Firestore (users/{uid})
+  try {
+    const { uid, displayName } = cred.user || {};
+    await setDoc(
+      doc(db, "users", uid),
+      {
+        uid,
+        email: email,
+        displayName: displayName || null,
+        lastLoginAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.warn("Failed to update lastLoginAt:", e);
+  }
+  return cred;
 }
 
 // -------------------------------------------------------------
@@ -52,7 +70,28 @@ export async function loginUser(email, password) {
 // -------------------------------------------------------------
 export async function signupUser(name, email, password) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(userCredential.user, { displayName: name });
+  // Update display name only if provided
+  if (name && name.trim()) {
+    await updateProfile(userCredential.user, { displayName: name.trim() });
+  }
+  // Create or merge user profile in Firestore
+  try {
+    const { uid, displayName } = userCredential.user || {};
+    await setDoc(
+      doc(db, "users", uid),
+      {
+        uid,
+        email: email,
+        displayName: (name && name.trim()) || displayName || null,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        provider: "password",
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    console.warn("Failed to create user profile:", e);
+  }
   return userCredential.user;
 }
 

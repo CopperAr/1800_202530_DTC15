@@ -1,19 +1,10 @@
 // -------------------------------------------------------------
 // src/loginSignup.js
 // -------------------------------------------------------------
-// Part of the COMP1800 Projects 1 Course (BCIT).
-// Starter code provided for students to use and adapt.
-// Manages the login/signup form behaviour and redirects.
+// Handles the login/signup form behaviour and redirects.
+// Uses dynamic import for authentication to avoid failing when
+// the page is served without a bundler.
 // -------------------------------------------------------------
-
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
-import '../styles/style.css';
-import {
-    loginUser,
-    signupUser,
-    authErrorMessage,
-} from './authentication.js';
 
 
 // --- Login and Signup Page ---
@@ -90,10 +81,16 @@ function initAuthUI() {
         }
         setSubmitDisabled(loginForm, true);
         try {
+            const { loginUser, authErrorMessage } = await import('/src/authentication.js');
             await loginUser(email, password);
             location.href = redirectUrl;
         } catch (err) {
-            showError(authErrorMessage(err));
+            try {
+              const { authErrorMessage } = await import('/src/authentication.js');
+              showError(authErrorMessage(err));
+            } catch (_) {
+              showError('Login failed. Please try again.');
+            }
             console.error(err);
         } finally {
             setSubmitDisabled(loginForm, false);
@@ -104,19 +101,30 @@ function initAuthUI() {
     signupForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideError();
-        const name = document.querySelector('#signupName')?.value?.trim() ?? '';
         const email = document.querySelector('#signupEmail')?.value?.trim() ?? '';
         const password = document.querySelector('#signupPassword')?.value ?? '';
-        if (!name || !email || !password) {
-            showError('Please fill in name, email, and password.');
+        const password2 = document.querySelector('#signupPasswordConfirm')?.value ?? '';
+        if (!email || !password || !password2) {
+            showError('Please fill in email and both password fields.');
+            return;
+        }
+        if (password !== password2) {
+            showError('Passwords do not match.');
             return;
         }
         setSubmitDisabled(signupForm, true);
         try {
-            await signupUser(name, email, password);
+            const { signupUser, authErrorMessage } = await import('/src/authentication.js');
+            // Name is optional; pass empty string to keep API consistent
+            await signupUser('', email, password);
             location.href = redirectUrl;
         } catch (err) {
-            showError(authErrorMessage(err));
+            try {
+              const { authErrorMessage } = await import('/src/authentication.js');
+              showError(authErrorMessage(err));
+            } catch (_) {
+              showError('Sign up failed. Please try again.');
+            }
             console.error(err);
         } finally {
             setSubmitDisabled(signupForm, false);
