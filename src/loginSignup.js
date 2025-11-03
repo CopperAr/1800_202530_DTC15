@@ -101,10 +101,11 @@ function initAuthUI() {
     signupForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideError();
+        const name = document.querySelector("#signupName")?.value?.trim() ?? "";
         const email = document.querySelector('#signupEmail')?.value?.trim() ?? '';
         const password = document.querySelector('#signupPassword')?.value ?? '';
         const password2 = document.querySelector('#signupPasswordConfirm')?.value ?? '';
-        if (!email || !password || !password2) {
+        if (!name || !email || !password || !password2) {
             showError('Please fill in email and both password fields.');
             return;
         }
@@ -116,7 +117,7 @@ function initAuthUI() {
         try {
             const { signupUser, authErrorMessage } = await import('/src/authentication.js');
             // Name is optional; pass empty string to keep API consistent
-            await signupUser('', email, password);
+            await signupUser(name, email, password);
             location.href = redirectUrl;
         } catch (err) {
             try {
