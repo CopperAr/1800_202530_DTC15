@@ -1,11 +1,20 @@
 
-// import { onAuthReady } from "/src/authentication.js";
+import { onAuthReady } from "/src/authentication.js";
+import { db } from "/src/firebaseConfig.js";
+import { collection, addDoc, query, where, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 
 document.addEventListener("DOMContentLoaded", () => {
     const calendarEl = document.getElementById("calendar");
-    if (!calendarEl) return;
+    const form = document.getElementById("eventForm");
+    const titleInput = document.getElementById("eventTitle");
+    const dateInput = document.getElementById("eventDate");
 
-    // FullCalendar is attached to window from the CDN script
+    if (!calendarEl || !form || !titleInput || !dateInput) {
+        console.warn("Schedule page DOM not ready");
+        return;
+    }
+
+    // create the calendar instance (no events yet)
     const calendar = new window.FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",
         height: "auto",
@@ -16,66 +25,93 @@ document.addEventListener("DOMContentLoaded", () => {
             right: "dayGridMonth,timeGridWeek,timeGridDay",
         },
 
-        // when user clicks a day on the calendar, pre-fill the form date
         dateClick: (info) => {
-            const dateInput = document.getElementById("eventDate");
-            if (dateInput) {
-                dateInput.value = info.dateStr; // yyyy-mm-dd
-                dateInput.focus();
-            }
+            // click on a day fills the form date
+            dateInput.value = info.dateStr;
+            titleInput.focus();
         },
 
-        // when user clicks an event, ask if they want to remove it
-        eventClick: (info) => {
-            const shouldDelete = confirm(
-                `Delete event "${info.event.title}" on ${info.event.start.toDateString()}?`
+        eventClick: async (info) => {
+            // click on an event prompts delete
+            const event = info.event;
+            const ok = confirm(
+                `Delete event "${event.title}" on ${event.start.toDateString()}?`
             );
-            if (shouldDelete) {
-                info.event.remove();
+            if (!ok) return;
+
+            // we stored the Firestore doc id in event.id
+            try {
+                await deleteDoc(doc(db, "events", event.id));
+                // no need to remove from calendar manually:
+                // onSnapshot will fire and refresh events
+            } catch (err) {
+                console.error("Failed to delete event:", err);
+                alert("Could not delete event. Please try again.");
             }
         },
-
-        // some sample events so it's not empty
-        events: [
-            {
-                title: "Study group",
-                start: new Date().toISOString().slice(0, 10),
-            },
-            {
-                title: "Hangout with friends",
-                start: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                    .toISOString()
-                    .slice(0, 10),
-            },
-        ],
     });
 
     calendar.render();
 
-    // handle the "Add Event" form
-    const form = document.getElementById("eventForm");
-    if (form) {
-        form.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const titleInput = document.getElementById("eventTitle");
-            const dateInput = document.getElementById("eventDate");
+    // authorization + Firestore wiring
+    onAuthReady((user) => {
+        if (!user) {
+            // not logged in → send them to login page
+            window.location.href = "login.html";
+            return;
+        }
 
-            const title = titleInput?.value.trim();
-            const date = dateInput?.value;
+        const uid = user.uid;
+        const eventsCol = collection(db, "events");
+        const userEventsQuery = query(eventsCol, where("userId", "==", uid));
+
+        // live listener: whenever this user's events change, update calendar
+        onSnapshot(
+            userEventsQuery,
+            (snapshot) => {
+                // clear existing events
+                calendar.getEvents().forEach((e) => e.remove());
+
+                // add all events from Firestore
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    calendar.addEvent({
+                        id: docSnap.id, // store Firestore doc id so we can delete later
+                        title: data.title,
+                        start: data.start, // "YYYY-MM-DD"
+                        allDay: true,
+                    });
+                });
+            },
+            (error) => {
+                console.error("Error listening to events:", error);
+            }
+        );
+
+        // handle "Add Event" form submit -> write to Firestore
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const title = titleInput.value.trim();
+            const date = dateInput.value;
 
             if (!title || !date) {
                 alert("Please enter both a title and a date.");
                 return;
             }
 
-            // add to calendar
-            calendar.addEvent({
-                title: title,
-                start: date,
-                allDay: true,
-            });
+            try {
+                await addDoc(eventsCol, {
+                    userId: uid,
+                    title: title,
+                    start: date,
+                });
 
-            titleInput.value = "";
+                // clear title, keep date to add multiple on same day
+                titleInput.value = "";
+            } catch (err) {
+                console.error("Failed to add event:", err);
+                alert("Could not save event. Please try again.");
+            }
         });
-    }
+    });
 });
