@@ -37,6 +37,11 @@
   .top-nav a:hover {
     color: #ffd369;
   }
+  .top-nav a.active {
+  font-weight: bold;
+  color: #ffc107;
+  text-decoration: underline;
+}
   .btn-login {
     background-color: #fff;
     color: #000;
