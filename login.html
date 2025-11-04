@@ -24,7 +24,7 @@
     <!------------------------------>
     <!-- our own navbar goes here -->
     <site-navbar></site-navbar>
-    <!-- Main content goes here -->
+    <!-- Main content goes here --> 
     <div class="container py-5" style="max-width: 420px">
       <!-- Alerts -->
       <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
@@ -65,12 +65,12 @@
         <form id="signupForm" novalidate>
           <div class="mb-3">
             <input
-              type="text"
-              id="signupName"
-              class="form-control"
-              placeholder="First and Last Name"
-              aria-label="Full name"
-              required
+            type="text"
+            id="signupName"
+            class="form-control"
+            placeholder="First and Last Name"
+            aria-label="Full name"
+            required
             />
           </div>
           <div class="mb-3">
@@ -88,6 +88,15 @@
               id="signupPassword"
               class="form-control"
               placeholder="Password"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <input
+              type="password"
+              id="signupPasswordConfirm"
+              class="form-control"
+              placeholder="Confirm Password"
               required
             />
           </div>
@@ -115,5 +124,21 @@
     <script type="module" src="/src/firebaseConfig.js"></script>
     <script type="module" src="/src/authentication.js"></script>
     <script type="module" src="/src/loginSignup.js"></script>
+
+    <!-- Fallback toggling (ensures UI switches even if modules fail to load) -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const loginView = document.getElementById('loginView');
+        const signupView = document.getElementById('signupView');
+        const toSignup = document.getElementById('toSignup');
+        const toLogin = document.getElementById('toLogin');
+        function show(view) {
+          if (loginView) loginView.classList.toggle('d-none', view !== 'login');
+          if (signupView) signupView.classList.toggle('d-none', view !== 'signup');
+        }
+        toSignup && toSignup.addEventListener('click', function (e) { e.preventDefault(); show('signup'); });
+        toLogin && toLogin.addEventListener('click', function (e) { e.preventDefault(); show('login'); });
+      });
+    </script>
   </body>
 </html>
