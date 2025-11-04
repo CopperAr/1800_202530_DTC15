@@ -1,26 +1,27 @@
 // Import specific functions from the Firebase Auth SDK
 import { onAuthStateChanged } from "firebase/auth";
-
 import { auth } from "/src/firebaseConfig.js";
 import { logoutUser } from "/src/authentication.js";
+
 class SiteNavbar extends HTMLElement {
   constructor() {
     super();
     this.renderNavbar();
     this.renderAuthControls();
+    this.highlightActiveLink();
   }
 
   renderNavbar() {
     this.innerHTML = `
-            <div class="top-nav">
-        <a href="#">Home</a>
-        <a href="#">Friends</a>
-        <a href="#">Hangouts</a>
-        <a href="#">Schedule</a>
-        <a href="profile.html">Profile</a>
-        <div id="authControls" class="ms-3"></div>
+      <div class="top-nav">
+      <a href="index.html">Home</a>
+      <a href="#">Friends</a>
+      <a href="#">Hangouts</a>
+      <a href="schedule.html">Schedule</a>
+      <a href="profile.html">Profile</a>
+      <div id="authControls" class="ms-3"></div>
       </div>
-        `;
+    `;
   }
   renderAuthControls() {
     const authControls = this.querySelector("#authControls");
@@ -39,6 +40,17 @@ class SiteNavbar extends HTMLElement {
       } else {
         updatedAuthControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
         authControls.innerHTML = updatedAuthControl;
+      }
+    });
+}
+
+  highlightActiveLink() {
+    const currentPage = window.location.pathname.split("/").pop();
+    const links = this.querySelectorAll("a[href]");
+    links.forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href && currentPage === href) {
+        link.classList.add("active");
       }
     });
   }
