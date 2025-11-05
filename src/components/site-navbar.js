@@ -14,7 +14,7 @@ class SiteNavbar extends HTMLElement {
   renderNavbar() {
     this.innerHTML = `
       <div class="top-nav">
-      <a href="index.html">Home</a>
+      <a href="main.html">Home</a>
       <a href="#">Friends</a>
       <a href="#">Hangouts</a>
       <a href="schedule.html">Schedule</a>
