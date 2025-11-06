@@ -27,7 +27,7 @@ class SiteNavbar extends HTMLElement {
           <a href="index.html" data-nav-home>Home</a>
           <a href="#">Friends</a>
           <a href="#">Hangouts</a>
-          <a href="#">Schedule</a>
+          <a href="schedule.html" data-nav-schedule>Schedule</a>
         </div>
         <div id="authControls" class="nav-auth"></div>
       </div>
