@@ -1,13 +1,14 @@
 // Import specific functions from the Firebase Auth SDK
 import { onAuthStateChanged } from "firebase/auth";
-
 import { auth } from "/src/firebaseConfig.js";
 import { logoutUser } from "/src/authentication.js";
+
 class SiteNavbar extends HTMLElement {
   constructor() {
     super();
     this.renderNavbar();
     this.renderAuthControls();
+    this.highlightActiveLink();
   }
 
   renderNavbar() {
@@ -51,6 +52,17 @@ class SiteNavbar extends HTMLElement {
         this.homeLink?.setAttribute("href", "index.html");
         updatedAuthControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
         authControls.innerHTML = updatedAuthControl;
+      }
+    });
+}
+
+  highlightActiveLink() {
+    const currentPage = window.location.pathname.split("/").pop();
+    const links = this.querySelectorAll("a[href]");
+    links.forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href && currentPage === href) {
+        link.classList.add("active");
       }
     });
   }

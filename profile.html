@@ -54,6 +54,7 @@ hr .new1 {
     <script type="module" src="/src/components/site-footer.js"></script>
     <script type="module" src="/src/app.js"></script>
     <script type="module" src="src/profile.js"></script>
+    <script type="module" src="src/main.js"></script>
   </head>
   <body class="bg-dark">
     <!------------------------------>
@@ -74,14 +75,13 @@ hr .new1 {
                   height="100"
                   width="100"
                 />
-              <span class="name mt-3">Username here</span>
-              <!-- <span class="idd">@eleanorpena</span> -->
+              <span id="name-goes-here" class="name mt-3">displayName</span>
               <div
                 class="d-flex flex-row justify-content-center align-items-center gap-2"
               >
               <div class="container mt-2">
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="myInput" value="UniqueID-01234" readonly>
+                    <span id="userID-goes-here" class="name mt-3 fs-6 p-2">userID</span>
                     <button class="btn btn-dark" type="button" id="copyButton">Copy</button>
                 </div>
                 <p id="feedbackMessage" class="text-success" style="display: none;">Copied!</p>
