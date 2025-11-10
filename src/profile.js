@@ -1,4 +1,7 @@
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { onAuthReady } from "/src/authentication.js";
+import { db } from "/src/firebaseConfig.js";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 const auth = getAuth();
 
@@ -15,6 +18,41 @@ onAuthStateChanged(auth, (user) => {
     console.log("No user signed in.");
   }
 });
+
+function populateUserInfo() {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        // reference to the user document
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+
+          const { displayName = "", school = "", city = "" } = userData;
+          console.log(userData)
+
+          document.getElementById("name-goes-here").textContent = displayName;
+          
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error) {
+        console.error("Error getting user document:", error);
+      }
+    } else {
+      console.log("No user is signed in");
+    }
+  });
+}
+
+//call the function to run it
+populateUserInfo();
+
+
+
+
 
 
 //copy userID to clipboard
