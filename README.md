@@ -13,6 +13,9 @@ Developed for the COMP 1800 course, this project applies User-Centred Design pra
 - Browse a list of curated hangouts and trails with images and details
 - Mark and unmark locations as favorites
 - View a personalized list of favorite hangouts
+- **Friends System**: Add friends, send/accept friend requests, and view your friends list
+- **Schedule Management**: Create and manage personal events with calendar integration
+- **User Authentication**: Secure login and signup with Firebase Authentication
 - Responsive design for desktop and mobile
 
 ---
@@ -30,10 +33,35 @@ Example:
 
 ## Usage
 
-1. Open your browser and visit `http://localhost:3000`.
-2. Browse the list of hangout locations displayed on the main page.
-3. Click the heart icon (or similar) to mark a hangout as a favorite.
-4. View your favorite hangouts in the favorites section.
+### Getting Started
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser and visit the URL shown in the terminal (usually `http://localhost:5173`).
+
+### Using the Application
+
+1. **Login/Signup**: Create an account or log in to access features
+2. **Main Page**: Browse hangout locations and view your dashboard
+3. **Friends**: 
+   - Visit the Friends page to manage your connections
+   - Add friends using their User ID (get it from Profile page)
+   - Accept or reject friend requests
+   - View your friends list
+4. **Schedule**: Create and manage your personal events with the calendar
+5. **Profile**: View your User ID and manage your account settings
+
+### Setting Up Friends Feature
+
+**Important**: You must configure Firestore security rules for the friends feature to work. See `朋友功能使用指南.md` (Chinese) or `FIREBASE_FRIENDS_SETUP.md` (English) for detailed instructions.
 
 ---
 
@@ -41,21 +69,31 @@ Example:
 
 ```
 hangout/
-├── images/
-│   ├── AM01.jpg
-│   ├── BBY01.jpg
-│   ├── elmo.jpg
-│   ├── hike1.jpg
-│   ├── hike2.jpg
-│   ├── hike3.jpg
-│   ├── logo.jpg
-│   └── NV01.jpg
+├── images/                          # Image assets
 ├── src/
-│   └── main.js
+│   ├── components/
+│   │   ├── site-navbar.js          # Navigation bar component
+│   │   └── site-footer.js          # Footer component
+│   ├── app.js                      # Main application logic
+│   ├── authentication.js           # Firebase authentication functions
+│   ├── firebaseConfig.js           # Firebase configuration
+│   ├── friends.js                  # Friends feature logic ✨ NEW
+│   ├── loginSignup.js              # Login/signup page logic
+│   ├── main.js                     # Main page logic
+│   ├── profile.js                  # Profile page logic
+│   └── schedule.js                 # Schedule/calendar logic
 ├── styles/
-│   └── style.css
-├── .gitignore
-├── index.html
+│   └── style.css                   # Global styles
+├── index.html                      # Landing page
+├── login.html                      # Login/signup page
+├── main.html                       # Main dashboard
+├── friends.html                    # Friends management page ✨ NEW
+├── profile.html                    # User profile page
+├── schedule.html                   # Calendar/schedule page
+├── add-test-friendship.html        # Database admin tool ✨ NEW
+├── FIREBASE_FRIENDS_SETUP.md       # Friends setup guide (EN) ✨ NEW
+├── FRIENDS_FEATURE_README.md       # Friends feature docs (EN) ✨ NEW
+├── 朋友功能使用指南.md             # Quick start guide (CN) ✨ NEW
 ├── package.json
 ├── package-lock.json
 └── README.md
@@ -79,18 +117,49 @@ hangout/
 
 ---
 
+## New: Friends Feature 🎉
+
+The friends system allows users to connect with each other:
+
+- **Add Friends**: Send friend requests using User IDs
+- **Manage Requests**: Accept or reject incoming friend requests
+- **View Friends**: See all your accepted friends in one place
+- **Real-time Updates**: Friend list updates automatically without refresh
+- **Admin Tool**: Use `add-test-friendship.html` to quickly add test data
+
+### Quick Setup
+
+1. Configure Firestore security rules (see `朋友功能使用指南.md`)
+2. Get a friend's User ID from their profile page
+3. Visit the Friends page and send a request
+4. Your friend accepts the request
+5. You're now connected!
+
+For detailed instructions, see:
+- **中文**: `朋友功能使用指南.md`
+- **English**: `FIREBASE_FRIENDS_SETUP.md`
+
+---
+
 ## Limitations and Future Work
 
 ### Limitations
 
-- Limited details on each hangout spot (e.g., no live updates or weather info).
-- Accessibility features can be further improved.
+- Limited details on each hangout spot (e.g., no live updates or weather info)
+- Accessibility features can be further improved
+- Friends cannot see each other's schedules yet
 
 ### Future Work
 
-- Implement map view and route directions.
-- Add filtering and sorting options (e.g., by category, location).
-- Introduce a dark mode for better usability in low-light conditions.
+- Implement map view and route directions
+- Add filtering and sorting options (e.g., by category, location)
+- Introduce a dark mode for better usability in low-light conditions
+- **Friend Features**:
+  - View friends' availability and schedules
+  - Suggest overlapping free times for hangouts
+  - Friend search functionality
+  - Friend grouping and categories
+  - Notifications for friend requests
 
 ---
 
