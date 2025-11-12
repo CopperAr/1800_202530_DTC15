@@ -2,53 +2,102 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hang Out</title>
     <link rel="stylesheet" href="styles/style.css" />
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      .name {
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      .idd {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .idd1 {
+        font-size: 12px;
+      }
+
+      .btn1 {
+        height: 40px;
+        width: 150px;
+        border: none;
+        background-color: #000;
+        color: #fafafa;
+        font-size: 15px;
+      }
+
+      h3 {
+        color: #000;
+      }
+
+      .icons i {
+        font-size: 19px;
+      }
+
+      hr .new1 {
+        border: 1px solid;
+      }
+    </style>
 
     <script type="module" src="/src/components/site-navbar.js"></script>
     <script type="module" src="/src/components/site-footer.js"></script>
+    <script type="module" src="/src/app.js"></script>
     <script type="module" src="src/profile.js"></script>
   </head>
-  <body>
-    <section class="hero-nav" style="height: auto; padding-bottom: 1rem;">
-      <site-navbar></site-navbar>
-      <div class="container py-3 text-center">
-        <h1 class="display-5">Profile</h1>
-        <p class="lead">Manage your account settings</p>
-      </div>
-    </section>
-
-    <main class="container my-4">
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-body text-center">
-              <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="mb-3">
-                <circle cx="50" cy="50" r="50" fill="#6c757d"/>
-                <circle cx="50" cy="40" r="15" fill="#f8f9fa"/>
-                <path d="M 30 75 Q 30 60 50 60 Q 70 60 70 75 Z" fill="#f8f9fa"/>
-              </svg>
-              
-              <h4 id="name-goes-here" class="mb-3">displayName</h4>
-              
+  <body class="bg-dark">
+    <site-navbar></site-navbar>
+    <div
+      class="container bg-secondary rounded py-5 d-flex justify-content-center"
+      style="max-width: 420px"
+    >
+      <main>
+        <div
+          class="image d-flex flex-column justify-content-center align-items-center"
+        >
+          <img src="https://i.imgur.com/wvxPV9S.png" height="100" width="100" />
+          <span id="name-goes-here" class="name mt-3">displayName</span>
+          <div
+            class="d-flex flex-row justify-content-center align-items-center gap-2"
+          >
+            <div class="container mt-2">
               <div class="input-group mb-3">
-                <input type="text" id="userID-goes-here" class="form-control" value="userID" readonly>
-                <button class="btn btn-outline-secondary" type="button" id="copyButton">Copy User ID</button>
+                <span id="userID-goes-here" class="name mt-3 fs-6 p-2"
+                  >userID</span
+                >
+                <button class="btn btn-dark" type="button" id="copyButton">
+                  Copy
+                </button>
               </div>
-              <p id="feedbackMessage" class="text-success" style="display: none;">Copied!</p>
-
-              <button type="button" class="btn btn-danger w-100 mt-3" id="signOutBtn">Sign Out</button>
+              <p
+                id="feedbackMessage"
+                class="text-success"
+                style="display: none"
+              >
+                Copied!
+              </p>
+              <h3 class="mb-3 mt-4 text-center">Profile</h3>
+              <button type="button" class="btn btn-dark w-100 my-2">
+                Edit Profile
+              </button>
+              <button type="button" class="btn btn-dark w-100 my-2">
+                Privacy Settings
+              </button>
+              <button id="signOutBtn" type="button" class="btn btn-dark w-100 my-2">
+                Sign Out
+              </button>
+              <h3 class="mb-3 mt-4">Support</h3>
+              <button type="button" class="btn btn-dark w-100 my-2">
+                Contact
+              </button>
+              <button type="button" class="btn btn-dark w-100 my-2">FAQ</button>
             </div>
           </div>
         </div>
-      </div>
-    </main>
-    
-    <site-footer></site-footer>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      </main>
+    </div>
   </body>
 </html>
