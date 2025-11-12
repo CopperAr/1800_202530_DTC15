@@ -223,3 +223,99 @@
       padding: 1.5rem 1rem;
     }
   }
+
+
+
+  /* Global mobile responsiveness */
+
+/* 1) Media and defaults */
+img, video, canvas, svg { max-width: 100%; height: auto; }
+iframe { max-width: 100%; }
+
+
+/* 2) Readable typography */
+h1 { font-size: clamp(1.8rem, 5vw, 3rem); }
+h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); }
+h3 { font-size: clamp(1.2rem, 3vw, 1.5rem); }
+body { font-size: clamp(0.95rem, 2.4vw, 1rem); line-height: 1.5; }
+
+
+/* 3) Make the big banner (hero) behave on phones */
+.hero-nav {
+  background-size: cover;
+  background-position: center;
+}
+.hero-nav .container { padding: 2.5rem 1rem; }
+.hero-nav h1 { margin-bottom: .25rem; }
+.hero-nav p.lead { margin: 0; opacity: .9; }
+
+
+/* 4) Navbar: stack nicely without changing HTML */
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: .5rem 1rem; flex-wrap: wrap;
+}
+.nav-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+.nav-auth  { display: flex; gap: .5rem; }
+
+
+/* 5) Forms: prevent overflow and keep spacing tight on small screens */
+form .form-label { font-weight: 500; }
+form .form-control, form .form-select, form textarea { min-height: 42px; }
+.btn-group { flex-wrap: wrap; }
+.list-group-item { padding: .8rem 1rem; }
+
+
+/* 6) Tables/Calendar: avoid horizontal scroll breaking layout */
+.responsive-scroll { width: 100%; overflow-x: auto; }
+.fc, .fc .fc-scroller { max-width: 100%; }
+
+
+/* 7) Cards/boxes default to full width on phones */
+.card, .panel, .box { width: 100%; }
+
+
+
+/* Breakpoints */
+
+/* ≤ 768px (tablets/phones) */
+@media (max-width: 768px) {
+  .top-nav { flex-direction: column; align-items: flex-start; }
+  .nav-links { width: 100%; justify-content: space-between; }
+  .nav-auth  { width: 100%; justify-content: flex-end; }
+
+  main.container { padding-left: 1rem; padding-right: 1rem; }
+  .hero-nav .container { padding: 2rem 1rem; }
+
+  /* two-up fields collapse gracefully (if any left at col-6) */
+  .col-6 { width: 100% !important; }
+}
+
+/* ≤ 576px (small phones) */
+@media (max-width: 576px) {
+  .nav-links { flex-direction: column; align-items: stretch; gap: .25rem; }
+  .nav-links a { display: block; width: 100%; padding: .4rem 0; }
+
+  /* tighter vertical rhythm for forms */
+  form .row > [class*="col-"] { margin-bottom: .5rem; }
+
+  /* button groups: keep buttons readable */
+  .btn-group>.btn { flex: 1 1 auto; min-width: 120px; }
+}
+
+
+
+/* FullCalendar mobile view */
+.fc .fc-toolbar.fc-header-toolbar { flex-wrap: wrap; gap: .5rem; }
+.fc .fc-toolbar-title { font-size: clamp(1rem, 4vw, 1.35rem); }
+
+/* Make header buttons slimmer so they don't crowd the title */
+.fc .fc-button { padding: .25rem .5rem; font-size: .875rem; }
+
+/* Month grid should never overflow horizontally */
+.fc, .fc .fc-scroller { max-width: 100%; }
+
+/* On small phones, stack buttons neatly */
+@media (max-width: 576px) {
+  .fc .fc-toolbar-chunk { display: flex; flex-wrap: wrap; gap: .25rem; }
+}
