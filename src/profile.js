@@ -10,7 +10,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const uid = user.uid;
     console.log("User UID:", uid);
-    userIDEl.value = uid;
+    userIDEl.textContent = uid;
     
     if (nameEl) {
       nameEl.textContent = user.displayName || user.email || "User";
@@ -28,7 +28,7 @@ document.getElementById("copyButton").addEventListener("click", function () {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard
-      .writeText(inputField.value)
+      .writeText(inputField.textContent)
       .then(() => {
         feedbackMessage.style.display = "block";
         setTimeout(() => {
@@ -40,8 +40,12 @@ document.getElementById("copyButton").addEventListener("click", function () {
         alert("Failed to copy text.");
       });
   } else {
-    inputField.select();
+    const textArea = document.createElement("textarea");
+    textArea.value = inputField.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
     document.execCommand("copy");
+    document.body.removeChild(textArea);
     feedbackMessage.style.display = "block";
     setTimeout(() => {
       feedbackMessage.style.display = "none";
