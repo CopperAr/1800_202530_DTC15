@@ -61,7 +61,7 @@ Example:
 
 ### Setting Up Friends Feature
 
-**Important**: You must configure Firestore security rules for the friends feature to work. See `朋友功能使用指南.md` (Chinese) or `FIREBASE_FRIENDS_SETUP.md` (English) for detailed instructions.
+**Important**: You must configure Firestore security rules for the friends feature to work.
 
 ---
 
@@ -90,10 +90,6 @@ hangout/
 ├── friends.html                    # Friends management page ✨ NEW
 ├── profile.html                    # User profile page
 ├── schedule.html                   # Calendar/schedule page
-├── add-test-friendship.html        # Database admin tool ✨ NEW
-├── FIREBASE_FRIENDS_SETUP.md       # Friends setup guide (EN) ✨ NEW
-├── FRIENDS_FEATURE_README.md       # Friends feature docs (EN) ✨ NEW
-├── 朋友功能使用指南.md             # Quick start guide (CN) ✨ NEW
 ├── package.json
 ├── package-lock.json
 └── README.md
@@ -117,7 +113,7 @@ hangout/
 
 ---
 
-## New: Friends Feature 🎉
+## Friends Feature
 
 The friends system allows users to connect with each other:
 
@@ -125,19 +121,13 @@ The friends system allows users to connect with each other:
 - **Manage Requests**: Accept or reject incoming friend requests
 - **View Friends**: See all your accepted friends in one place
 - **Real-time Updates**: Friend list updates automatically without refresh
-- **Admin Tool**: Use `add-test-friendship.html` to quickly add test data
 
-### Quick Setup
+### Setup
 
-1. Configure Firestore security rules (see `朋友功能使用指南.md`)
+1. Configure Firestore security rules in Firebase Console
 2. Get a friend's User ID from their profile page
 3. Visit the Friends page and send a request
 4. Your friend accepts the request
-5. You're now connected!
-
-For detailed instructions, see:
-- **中文**: `朋友功能使用指南.md`
-- **English**: `FIREBASE_FRIENDS_SETUP.md`
 
 ---
 
