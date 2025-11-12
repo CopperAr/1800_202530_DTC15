@@ -25,7 +25,7 @@ class SiteNavbar extends HTMLElement {
         </a>
         <div class="nav-links">
           <a href="main.html" data-nav-home>Home</a>
-          <a href="#">Friends</a>
+          <a href="friends.html">Friends</a>
           <a href="hangout.html" data-nav-hangouts>Hangouts</a>
           <a href="schedule.html" data-nav-schedule>Schedule</a>
         </div>
