@@ -64,16 +64,21 @@
       style="max-width: 420px"
     >
       <!-- Profile -->
-      <div id="profileView" class="d-none">
+      <div id="profileView" class="">
         <div
           class="image d-flex flex-column justify-content-center align-items-center"
         >
           <img src="https://i.imgur.com/wvxPV9S.png" height="100" width="100" />
           <span id="name-goes-here" class="name mt-3">displayName</span>
+          <!-- ToDo link firestore to optional inputs: pronouns, city -->
+          <span id="pronouns-go-here" class="name mt-3"></span>
+          <span id="city-goes-here" class="name mt-3"></span>
         </div>
         <div
           class="d-flex flex-row justify-content-center align-items-center gap-2"
         >
+
+        
           <div class="container mt-2">
             <div class="input-group mb-3">
               <span id="userID-goes-here" class="name mt-3 fs-6 p-2"
@@ -89,15 +94,9 @@
             </p>
 
             <h3 class="mb-3 mt-4 text-center">Profile</h3>
-            <a href="editprofile.html">
-              <button
-                id="editBtn"
-                type="submit"
-                class="btn btn-dark w-100 my-2"
-              >
-                Edit Profile
-              </button>
-            </a>
+            <button id="editBtn" type="submit" class="btn btn-dark w-100 my-2">
+              Edit Profile
+            </button>
             <button type="submit" class="btn btn-dark w-100 my-2">
               Privacy Settings
             </button>
@@ -118,10 +117,18 @@
       </div>
 
       <!-- Edit Profile -->
-      <div id="editProfileView" class="">
+      <div id="editProfileView" class="d-none">
         <h1>Edit Profile</h1>
+        <div
+          class="image d-flex flex-column justify-content-center align-items-center"
+        >
+          <img src="https://i.imgur.com/wvxPV9S.png" height="100" width="100" />
+        </div>
+        <button id="editPictureBtn" type="submit" class="btn btn-dark w-100 my-2">
+          Change Profile Picture
+        </button>
         <form>
-          <fieldset class="mb-3" id="personalInfoFields" disabled>
+          <fieldset class="mb-3" id="personalInfoFields">
             <div class="form-group">
               <label>Name</label>
               <input
@@ -132,12 +139,12 @@
               />
             </div>
             <div class="form-group">
-              <label>School</label>
+              <label>Pronouns</label>
               <input
                 type="text"
-                id="schoolInput"
+                id="pronounInput"
                 class="form-control"
-                placeholder="Enter your school"
+                placeholder="ie. he/him, she/they"
               />
             </div>
             <div class="form-group">
@@ -151,8 +158,8 @@
             </div>
           </fieldset>
           <div class="d-flex justify-content-end mt-5">
-            <button id="editButton" type="button" class="btn btn-secondary">
-              Edit
+            <button id="discardEditBtn" type="button" class="btn btn-secondary">
+              Discard Changes
             </button>
             <span style="width: 10px"></span>
             <button id="saveButton" type="button" class="btn btn-info">
