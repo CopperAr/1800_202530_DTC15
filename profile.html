@@ -50,52 +50,117 @@
   </head>
   <body class="bg-dark">
     <site-navbar></site-navbar>
+    <!-- Main content goes here -->
     <div
       class="container bg-secondary rounded py-5 d-flex justify-content-center"
       style="max-width: 420px"
     >
-      <main>
+      <!-- Profile -->
+      <div id="profileView" class="">
         <div
           class="image d-flex flex-column justify-content-center align-items-center"
         >
           <img src="https://i.imgur.com/wvxPV9S.png" height="100" width="100" />
           <span id="name-goes-here" class="name mt-3">displayName</span>
-          <div
-            class="d-flex flex-row justify-content-center align-items-center gap-2"
-          >
-            <div class="container mt-2">
-              <div class="input-group mb-3">
-                <input type="text" id="userID-goes-here" class="form-control" value="userID" readonly>
-                <button class="btn btn-dark" type="button" id="copyButton">
-                  Copy
-                </button>
-              </div>
-              <p
-                id="feedbackMessage"
-                class="text-success"
-                style="display: none"
+          <span id="pronouns-go-here" class="name mt-3"></span>
+          <span id="city-goes-here" class="name mt-3"></span>
+        </div>
+        <div
+          class="d-flex flex-row justify-content-center align-items-center gap-2"
+        >
+          <div class="container mt-2">
+            <div class="input-group mb-3">
+              <span id="userID-goes-here" class="name mt-3 fs-6 p-2"
+                >userID</span
               >
-                Copied!
-              </p>
-              <h3 class="mb-3 mt-4 text-center">Profile</h3>
-              <button type="button" class="btn btn-dark w-100 my-2">
-                Edit Profile
+              <button class="btn btn-dark" type="button" id="copyButton">
+                Copy
               </button>
-              <button type="button" class="btn btn-dark w-100 my-2">
-                Privacy Settings
-              </button>
-              <button id="signOutBtn" type="button" class="btn btn-dark w-100 my-2">
-                Sign Out
-              </button>
-              <h3 class="mb-3 mt-4">Support</h3>
-              <button type="button" class="btn btn-dark w-100 my-2">
-                Contact
-              </button>
-              <button type="button" class="btn btn-dark w-100 my-2">FAQ</button>
             </div>
+            <!-- Feedback on successful uid copy -->
+            <p id="feedbackMessage" class="text-success" style="display: none">
+              Copied!
+            </p>
+
+            <h3 class="mb-3 mt-4 text-center">Profile</h3>
+            <button id="editBtn" type="submit" class="btn btn-dark w-100 my-2">
+              Edit Profile
+            </button>
+            <button type="submit" class="btn btn-dark w-100 my-2">
+              Privacy Settings
+            </button>
+            <button
+              id="signOutBtn"
+              type="button"
+              class="btn btn-dark w-100 my-2"
+            >
+              Sign Out
+            </button>
+            <h3 class="mb-3 mt-4">Support</h3>
+            <button type="submit" class="btn btn-dark w-100 my-2">
+              Contact
+            </button>
+            <button type="submit" class="btn btn-dark w-100 my-2">FAQ</button>
           </div>
         </div>
-      </main>
+      </div>
+
+      <!-- Edit Profile -->
+      <div id="editProfileView" class="d-none">
+        <h1>Edit Profile</h1>
+        <div
+          class="image d-flex flex-column justify-content-center align-items-center"
+        >
+          <img src="https://i.imgur.com/wvxPV9S.png" height="100" width="100" />
+        </div>
+        <button
+          id="editPictureBtn"
+          type="submit"
+          class="btn btn-dark w-100 my-2"
+        >
+          Change Profile Picture
+        </button>
+        <form>
+          <fieldset class="mb-3" id="personalInfoFields">
+            <div class="form-group">
+              <label>Name</label>
+              <input
+                type="text"
+                id="nameInput"
+                class="form-control"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div class="form-group">
+              <label>Pronouns</label>
+              <input
+                type="text"
+                id="pronounInput"
+                class="form-control"
+                placeholder="ie. he/him, she/they"
+              />
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input
+                type="text"
+                id="cityInput"
+                class="form-control"
+                placeholder="Enter your city"
+              />
+            </div>
+          </fieldset>
+          <div class="d-flex justify-content-end mt-5">
+            <button id="discardEditBtn" type="button" class="btn btn-secondary">
+              Discard Changes
+            </button>
+            <span style="width: 10px"></span>
+            <button id="saveButton" type="button" class="btn btn-info">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </body>
 </html>

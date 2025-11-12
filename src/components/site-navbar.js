@@ -24,9 +24,9 @@ class SiteNavbar extends HTMLElement {
           </svg>
         </a>
         <div class="nav-links">
-          <a href="index.html" data-nav-home>Home</a>
-          <a href="friends.html" data-nav-friends>Friends</a>
-          <a href="hangout.html" data-nav-hangout>Hangouts</a>
+          <a href="main.html" data-nav-home>Home</a>
+          <a href="friends.html">Friends</a>
+          <a href="hangout.html" data-nav-hangouts>Hangouts</a>
           <a href="schedule.html" data-nav-schedule>Schedule</a>
         </div>
         <div id="authControls" class="nav-auth"></div>
