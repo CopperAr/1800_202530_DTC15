@@ -1,7 +1,7 @@
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { onAuthReady } from "/src/authentication.js";
 import { auth, db } from "/src/firebaseConfig.js";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 
 function populateUserInfo() {
@@ -18,13 +18,17 @@ function populateUserInfo() {
           const { displayName = "", uid = "", pronouns = "" ,city = "" } = userData;
           console.log(userData)
           //Populate Profile Page
+          // if (!pronouns) setVisible(pronouns-go-here, false)
           document.getElementById("name-goes-here").textContent = displayName;
+          document.getElementById("pronouns-go-here").textContent = pronouns;
+          document.getElementById("city-goes-here").textContent = city;
           document.getElementById("userID-goes-here").textContent = uid;
+
 
           //Populate Edit Page
           document.getElementById("nameInput").value = displayName;
-          if (pronouns) document.getElementById("pronounInput").value = pronouns;
-          if (city) document.getElementById("cityInput").value = city;
+          document.getElementById("pronounInput").value = pronouns;
+          document.getElementById("cityInput").value = city;
           
         } else {
           console.log("No such document!");
@@ -60,34 +64,46 @@ discardEditBtn?.addEventListener("click", () => {
 
 
 //-------------------------------------------------------------
-// Function to enable editing of user info form fields
-//------------------------------------------------------------- 
-document.querySelector('#editBtn').addEventListener('click', editUserInfo);
-function editUserInfo() {
-    //Enable the form fields
-    document.getElementById('personalInfoFields').disabled = false;
-}
-
-//-------------------------------------------------------------
 // Function to save updated user info from the profile form
 //-------------------------------------------------------------
 document.querySelector('#saveButton').addEventListener('click', saveUserInfo);   //Add event listener for save button
 async function saveUserInfo() {
-		  const user = auth.currentUser;   // ✅ get the currently logged-in user
-	    if (!user) {
-		    alert("No user is signed in. Please log in first.");
-		    return;
-		  }
-     //enter code here
+  const user = auth.currentUser; // ✅ get the currently logged-in user
+  if (!user) {
+    alert("No user is signed in. Please log in first.");
+    return;
+  }
+  //enter code here
 
-     //a) get user entered values
+  //a) get user entered values
+  const newName = document.getElementById("nameInput").value; //get the value of the field with id="nameInput"
+  const newPronouns = document.getElementById("pronounInput").value; //get the value of the field with id="pronounInput"
+  const newCity = document.getElementById("cityInput").value; //get the value of the field with id="cityInput"
 
-     //b) update user's document in Firestore
+  //b) update user's document in Firestore
+  await updateUserDocument(user.uid, newName, newPronouns, newCity); 
 
-     //c) disable edit 
+  //c) return to profile
+  setVisible(editProfileView, false);
+  setVisible(profileView, true);
+  populateUserInfo();
 }
 
-
+//-------------------------------------------------------------
+// Updates the user document in Firestore with new values
+// Parameters:
+//   uid (string)  – user’s UID
+//   name, school, city (strings)
+//-------------------------------------------------------------
+async function updateUserDocument(uid, displayName, pronouns, city) {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, { displayName, pronouns, city });
+    console.log("User document successfully updated!");
+  } catch (error) {
+    console.error("Error updating user document:", error);
+  }
+}
 
 //-------------------------------------------------------------
 //Copy userID to clipboard
