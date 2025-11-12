@@ -1,7 +1,14 @@
-
+// src/hangout.js
 import { onAuthReady } from "/src/authentication.js";
 import { db } from "/src/firebaseConfig.js";
-import { collection, addDoc,query, where, onSnapshot, serverTimestamp } from "firebase/firestore";
+import {
+    collection,
+    addDoc,
+    query,
+    where,
+    onSnapshot,
+    serverTimestamp,
+} from "firebase/firestore";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("hangoutForm");
@@ -36,46 +43,81 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // Bootstrap modal instance (global from CDN)
     const detailsModal = new bootstrap.Modal(modalElement);
 
     let allHangouts = [];
     let currentFilter = "upcoming"; // 'upcoming' or 'past'
 
-    function getHangoutDateTime(h) {
-        if (!h.date) return null;
+    // ---------- Date parsing that accepts multiple formats ----------
+    function parseHangoutDate(dateVal, timeVal) {
+        // Firestore Timestamp
+        if (dateVal && typeof dateVal.toDate === "function") {
+            const d = dateVal.toDate();
+            if (timeVal) {
+                const [hh, mm] = (timeVal || "0:0").split(":").map(Number);
+                d.setHours(hh || 0, mm || 0, 0, 0);
+            }
+            return d;
+        }
 
-        try {
-            const [year, month, day] = h.date.split("-").map(Number);
-            let hours = 0;
-            let minutes = 0;
+        // Already a Date object
+        if (dateVal instanceof Date) return dateVal;
 
-            if (h.startTime) {
-                const [hh, mm] = h.startTime.split(":").map(Number);
-                hours = hh;
-                minutes = mm;
+        // Strings
+        if (typeof dateVal === "string") {
+            let y, m, d;
+
+            // yyyy-mm-dd
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+                [y, m, d] = dateVal.split("-").map(Number);
+
+                // mm/dd/yyyy
+            } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateVal)) {
+                const [mm, dd, yyyy] = dateVal.split("/").map(Number);
+                y = yyyy; m = mm; d = dd;
+
+                // Fallback to Date.parse for other valid strings (e.g., ISO)
+            } else if (!Number.isNaN(Date.parse(dateVal))) {
+                const parsed = new Date(dateVal);
+                if (timeVal) {
+                    const [hh, mm] = (timeVal || "0:0").split(":").map(Number);
+                    parsed.setHours(hh || 0, mm || 0, 0, 0);
+                }
+                return parsed;
+            } else {
+                return null;
             }
 
-            // Date(year, monthIndex, day, hours, minutes)
-            return new Date(year, month - 1, day, hours, minutes);
-        } catch (e) {
-            console.warn("Failed to parse date/time for hangout:", h, e);
-            return null;
+            // Apply time if present
+            let hh = 0, mm2 = 0;
+            if (timeVal) {
+                const parts = timeVal.split(":").map(Number);
+                hh = parts[0] || 0;
+                mm2 = parts[1] || 0;
+            }
+            return new Date(y, (m || 1) - 1, d || 1, hh, mm2);
         }
+
+        return null;
+    }
+
+    function getHangoutDateTime(h) {
+        return parseHangoutDate(h.date, h.startTime);
     }
 
     function isUpcoming(h) {
         const dt = getHangoutDateTime(h);
-        if (!dt) return true; // if no date, treat as upcoming
-        const now = new Date();
-        return dt >= now;
+        if (!dt || Number.isNaN(dt.getTime())) return true; // unknown date → treat as upcoming
+        return dt.getTime() >= Date.now();
     }
 
     function isPast(h) {
         const dt = getHangoutDateTime(h);
-        if (!dt) return false; // if no date, don't treat as past
-        const now = new Date();
-        return dt < now;
+        if (!dt || Number.isNaN(dt.getTime())) return false;
+        return dt.getTime() < Date.now();
     }
+    // ----------------------------------------------------------------
 
     function renderList() {
         listEl.innerHTML = "";
@@ -138,9 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 li.appendChild(descLine);
             }
 
-            // Clicking a hangout opens the details modal
             li.addEventListener("click", () => openDetailsModal(h));
-
             listEl.appendChild(li);
         });
     }
@@ -155,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modalTitleEl.textContent = title;
 
-        // Clear body first
         modalBodyEl.innerHTML = "";
 
         const dateP = document.createElement("p");
@@ -238,22 +277,30 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
 
             const title = nameInput.value.trim();
-            const date = dateInput.value;
+            const rawDate = dateInput.value; // could be yyyy-mm-dd OR mm/dd/yyyy depending on locale/browser
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
             const location = locationInput.value.trim();
             const description = descriptionInput.value.trim();
 
-            if (!title || !date || !startTime) {
+            if (!title || !rawDate || !startTime) {
                 alert("Please fill in hangout name, date, and start time.");
                 return;
+            }
+
+            // Normalize date to yyyy-mm-dd when possible
+            let normalizedDate = rawDate;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+                normalizedDate = rawDate;
+            } else if (!Number.isNaN(Date.parse(rawDate))) {
+                normalizedDate = new Date(rawDate).toISOString().slice(0, 10);
             }
 
             try {
                 await addDoc(hangoutsCol, {
                     userId: uid,
                     title,
-                    date,
+                    date: normalizedDate || rawDate,
                     startTime,
                     endTime: endTime || null,
                     location: location || null,
@@ -263,10 +310,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 form.reset();
-                // keep current filter; list will auto-update via onSnapshot
+                // list will auto-update via onSnapshot
             } catch (err) {
                 console.error("Failed to create hangout:", err);
-                alert("Could not create hangout. Please try again.");
+                alert(`Could not create hangout: ${err.code || err.message}`);
             }
         });
     });
