@@ -36,11 +36,13 @@ Example:
 ### Getting Started
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Run the development server**:
+
    ```bash
    npm run dev
    ```
@@ -51,7 +53,7 @@ Example:
 
 1. **Login/Signup**: Create an account or log in to access features
 2. **Main Page**: Browse hangout locations and view your dashboard
-3. **Friends**: 
+3. **Friends**:
    - Visit the Friends page to manage your connections
    - Add friends using their User ID (get it from Profile page)
    - Accept or reject friend requests
