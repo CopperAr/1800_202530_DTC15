@@ -1,23 +1,8 @@
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { onAuthReady } from "/src/authentication.js";
-import { db } from "/src/firebaseConfig.js";
+import { auth, db } from "/src/firebaseConfig.js";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
-const auth = getAuth();
-
-onAuthStateChanged(auth, (user) => {
-  const userIDEl = document.getElementById("userID-goes-here");
-  if (user) {
-    // User is signed in, get their UID
-    const uid = user.uid;
-    console.log("User UID:", uid);
-    userIDEl.textContent = `${uid}`;
-    // You can now use this UID to access their data in Firestore
-  } else {
-    // User is signed out
-    console.log("No user signed in.");
-  }
-});
 
 function populateUserInfo() {
   onAuthStateChanged(auth, async (user) => {
@@ -30,10 +15,11 @@ function populateUserInfo() {
         if (userSnap.exists()) {
           const userData = userSnap.data();
 
-          const { displayName = "", school = "", city = "" } = userData;
+          const { displayName = "", uid = "", city = "" } = userData;
           console.log(userData)
 
           document.getElementById("name-goes-here").textContent = displayName;
+          document.getElementById("userID-goes-here").textContent = uid;
           
         } else {
           console.log("No such document!");
@@ -50,12 +36,20 @@ function populateUserInfo() {
 //call the function to run it
 populateUserInfo();
 
+//-------------------------------------------------------------
+// Function to enable editing of user info form fields
+//------------------------------------------------------------- 
+document.querySelector('#editBtn').addEventListener('click', editUserInfo);
+function editUserInfo() {
+    //Enable the form fields
+    document.getElementById('personalInfoFields').disabled = false;
+}
 
 
 
-
-
-//copy userID to clipboard
+//-------------------------------------------------------------
+//Copy userID to clipboard
+//-------------------------------------------------------------
 document.getElementById("copyButton").addEventListener("click", function () {
   const inputField = document.getElementById("userID-goes-here");
   const feedbackMessage = document.getElementById("feedbackMessage");
