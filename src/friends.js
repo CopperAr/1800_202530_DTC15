@@ -123,15 +123,21 @@ document.addEventListener("DOMContentLoaded", () => {
         myFriendsList.innerHTML = "";
         const friends = [];
 
+        console.log("Friends query snapshot size:", snapshot.size);
+        
         for (const docSnap of snapshot.docs) {
           const data = docSnap.data();
+          console.log("Checking friendship:", docSnap.id, data);
+          
           // Only include if current user is part of this friendship
           if (data.fromUserId === uid || data.toUserId === uid) {
             const friendId = data.fromUserId === uid ? data.toUserId : data.fromUserId;
             friends.push({ id: docSnap.id, friendId, ...data });
+            console.log("Added friend:", friendId);
           }
         }
 
+        console.log("Total friends found:", friends.length);
         friendCountBadge.textContent = friends.length;
 
         if (friends.length === 0) {
@@ -348,11 +354,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Accept friend request
   async function acceptFriendRequest(requestId) {
     try {
+      console.log("Accepting friend request:", requestId);
       await updateDoc(doc(db, "friendships", requestId), {
         status: "accepted",
         updatedAt: serverTimestamp(),
       });
-      console.log("Friend request accepted");
+      console.log("Friend request accepted successfully");
     } catch (error) {
       console.error("Error accepting friend request:", error);
       alert("Failed to accept friend request. Please try again.");
