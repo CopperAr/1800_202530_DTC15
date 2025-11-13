@@ -16,14 +16,14 @@ function populateUserInfo() {
         if (userSnap.exists()) {
           const userData = userSnap.data();
 
-          const { displayName = "", uid = "", pronouns = "" ,city = "" } = userData;
+          const { displayName = "", email = "", pronouns = "" ,city = "" } = userData;
           console.log(userData)
           //Populate Profile Page
           // if (!pronouns) setVisible(pronouns-go-here, false)
           document.getElementById("name-goes-here").textContent = displayName;
           document.getElementById("pronouns-go-here").textContent = pronouns;
           document.getElementById("city-goes-here").textContent = city;
-          document.getElementById("userID-goes-here").textContent = uid;
+          document.getElementById("email-goes-here").textContent = email;
 
 
           //Populate Edit Page
@@ -129,12 +129,14 @@ onAuthStateChanged(auth, (user) => {
 
 
 document.getElementById("copyButton").addEventListener("click", function () {
-  const inputField = document.getElementById("userID-goes-here");
+  const inputField = document.getElementById("email-goes-here");
+  console.log(inputField)
+  console.log(inputField.textContent)
   const feedbackMessage = document.getElementById("feedbackMessage");
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard
-      .writeText(inputField.value)
+      .writeText(inputField.textContent)
       .then(() => {
         feedbackMessage.style.display = "block";
         setTimeout(() => {

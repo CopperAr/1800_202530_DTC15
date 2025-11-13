@@ -69,18 +69,22 @@
           class="d-flex flex-row justify-content-center align-items-center gap-2"
         >
           <div class="container mt-2">
-            <div class="input-group mb-3">
-              <span id="userID-goes-here" class="name mt-3 fs-6 p-2"
+            <div class="input-group mb-3 flex justify-content-center">
+              <!-- Generating a unique 6 digit id was too difficult, so doing email instead -->
+              <!-- <span id="userID-goes-here" class="name mt-3 fs-6 p-2"
                 >userID</span
+              > -->
+              <span id="email-goes-here" class="name mt-3 fs-6 p-2"
+                >Email</span
               >
               <button class="btn btn-dark" type="button" id="copyButton">
                 Copy
               </button>
             </div>
             <!-- Feedback on successful uid copy -->
-            <p id="feedbackMessage" class="text-success" style="display: none">
+            <span id="feedbackMessage" class="text-success bg-dark text-center fs-4" style="display: none">
               Copied!
-            </p>
+            </span>
 
             <h3 class="mb-3 mt-4 text-center">Profile</h3>
             <button id="editBtn" type="submit" class="btn btn-dark w-100 my-2">
