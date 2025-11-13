@@ -141,12 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const renderFriendsList = async () => {
       const allFriends = new Map();
 
-      // Combine sent and received friends
+      // Combine sent and received friends, using friendId as key to avoid duplicates
       sentFriends.forEach((friend) => {
-        allFriends.set(friend.id, friend);
+        allFriends.set(friend.friendId, friend);
       });
       receivedFriends.forEach((friend) => {
-        allFriends.set(friend.id, friend);
+        allFriends.set(friend.friendId, friend);
       });
 
       const friends = Array.from(allFriends.values());

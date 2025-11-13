@@ -85,10 +85,10 @@ async function loadFriendsList(uid) {
     const allFriends = new Map();
 
     sentFriends.forEach((friend) => {
-      allFriends.set(friend.id, friend);
+      allFriends.set(friend.friendId, friend);
     });
     receivedFriends.forEach((friend) => {
-      allFriends.set(friend.id, friend);
+      allFriends.set(friend.friendId, friend);
     });
 
     const friends = Array.from(allFriends.values());
