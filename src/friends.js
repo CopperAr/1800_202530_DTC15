@@ -81,11 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
             li.className = "list-group-item d-flex justify-content-between align-items-center";
             
             const userName = fromUserData?.displayName || fromUserData?.email || req.fromUserId;
+            const userEmail = fromUserData?.email || '';
             
             li.innerHTML = `
               <div>
                 <strong>${userName}</strong>
-                <br><small class="text-muted">${req.fromUserId}</small>
+                <br><small class="text-muted">${userEmail}</small>
               </div>
               <div class="btn-group btn-group-sm" role="group">
                 <button class="btn btn-success btn-sm accept-btn" data-id="${req.id}">Accept</button>
@@ -143,11 +144,12 @@ document.addEventListener("DOMContentLoaded", () => {
             li.className = "list-group-item d-flex justify-content-between align-items-center";
             
             const userName = friendData?.displayName || friendData?.email || friend.friendId;
+            const userEmail = friendData?.email || '';
             
             li.innerHTML = `
               <div>
                 <strong>${userName}</strong>
-                <br><small class="text-muted">${friend.friendId}</small>
+                <br><small class="text-muted">${userEmail}</small>
               </div>
               <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
             `;
@@ -175,23 +177,24 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const friendUserId = friendUserIdInput.value.trim();
+    const friendEmail = friendUserIdInput.value.trim();
 
-    if (!friendUserId) {
-      showMessage("Please enter a User ID.", "danger");
+    if (!friendEmail) {
+      showMessage("Please enter an email address.", "danger");
       return;
     }
 
-    if (friendUserId === currentUser.uid) {
+    if (friendEmail === currentUser.email) {
       showMessage("You cannot add yourself as a friend.", "danger");
       return;
     }
 
     try {
-      // Check if user exists
-      const userExists = await checkUserExists(friendUserId);
-      if (!userExists) {
-        showMessage("User not found. Please check the User ID.", "danger");
+      // Find user by email
+      const friendUserId = await getUserIdByEmail(friendEmail);
+      
+      if (!friendUserId) {
+        showMessage("User not found. Please check the email address.", "danger");
         return;
       }
 
@@ -256,6 +259,32 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Error checking user existence:", error);
       return false;
+    }
+  }
+
+  // Helper function to find user UID by email
+  async function getUserIdByEmail(email) {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", email));
+      
+      return new Promise((resolve) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          unsubscribe();
+          if (!snapshot.empty) {
+            const userDoc = snapshot.docs[0];
+            resolve(userDoc.id);
+          } else {
+            resolve(null);
+          }
+        }, (error) => {
+          console.error("Error finding user by email:", error);
+          resolve(null);
+        });
+      });
+    } catch (error) {
+      console.error("Error in getUserIdByEmail:", error);
+      return null;
     }
   }
 
