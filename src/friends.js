@@ -111,67 +111,98 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     );
 
-    // Listen to accepted friendships (where user is either fromUserId or toUserId && status == 'accepted')
-    const friendsQuery = query(
+    // Listen to accepted friendships where current user is the sender
+    const sentFriendsQuery = query(
       collection(db, "friendships"),
+      where("fromUserId", "==", uid),
       where("status", "==", "accepted")
     );
 
-    onSnapshot(
-      friendsQuery,
-      async (snapshot) => {
-        myFriendsList.innerHTML = "";
-        const friends = [];
-
-        console.log("Friends query snapshot size:", snapshot.size);
-        
-        for (const docSnap of snapshot.docs) {
-          const data = docSnap.data();
-          console.log("Checking friendship:", docSnap.id, data);
-          
-          // Only include if current user is part of this friendship
-          if (data.fromUserId === uid || data.toUserId === uid) {
-            const friendId = data.fromUserId === uid ? data.toUserId : data.fromUserId;
-            friends.push({ id: docSnap.id, friendId, ...data });
-            console.log("Added friend:", friendId);
-          }
-        }
-
-        console.log("Total friends found:", friends.length);
-        friendCountBadge.textContent = friends.length;
-
-        if (friends.length === 0) {
-          myFriendsList.innerHTML =
-            '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
-        } else {
-          for (const friend of friends) {
-            const friendData = await getUserData(friend.friendId);
-            const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            
-            const userName = friendData?.displayName || friendData?.email || friend.friendId;
-            const userEmail = friendData?.email || '';
-            
-            li.innerHTML = `
-              <div>
-                <strong>${userName}</strong>
-                <br><small class="text-muted">${userEmail}</small>
-              </div>
-              <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
-            `;
-            myFriendsList.appendChild(li);
-          }
-
-          // Add event listeners for remove buttons
-          myFriendsList.querySelectorAll(".remove-btn").forEach((btn) => {
-            btn.addEventListener("click", () => removeFriend(btn.dataset.id));
-          });
-        }
-      },
-      (error) => {
-        console.error("Error listening to friends:", error);
-      }
+    // Listen to accepted friendships where current user is the receiver
+    const receivedFriendsQuery = query(
+      collection(db, "friendships"),
+      where("toUserId", "==", uid),
+      where("status", "==", "accepted")
     );
+
+    // Function to update friends list
+    const updateFriendsList = async () => {
+      const allFriends = new Map();
+
+      // Get friends where user is sender
+      const sentSnapshot = await new Promise((resolve) => {
+        const unsubscribe = onSnapshot(sentFriendsQuery, (snapshot) => {
+          unsubscribe();
+          resolve(snapshot);
+        });
+      });
+
+      // Get friends where user is receiver
+      const receivedSnapshot = await new Promise((resolve) => {
+        const unsubscribe = onSnapshot(receivedFriendsQuery, (snapshot) => {
+          unsubscribe();
+          resolve(snapshot);
+        });
+      });
+
+      // Combine both queries
+      sentSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        allFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.toUserId,
+          ...data
+        });
+      });
+
+      receivedSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        allFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.fromUserId,
+          ...data
+        });
+      });
+
+      const friends = Array.from(allFriends.values());
+      friendCountBadge.textContent = friends.length;
+
+      myFriendsList.innerHTML = "";
+
+      if (friends.length === 0) {
+        myFriendsList.innerHTML =
+          '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
+      } else {
+        for (const friend of friends) {
+          const friendData = await getUserData(friend.friendId);
+          const li = document.createElement("li");
+          li.className = "list-group-item d-flex justify-content-between align-items-center";
+          
+          const userName = friendData?.displayName || friendData?.email || friend.friendId;
+          const userEmail = friendData?.email || '';
+          
+          li.innerHTML = `
+            <div>
+              <strong>${userName}</strong>
+              <br><small class="text-muted">${userEmail}</small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
+          `;
+          myFriendsList.appendChild(li);
+        }
+
+        myFriendsList.querySelectorAll(".remove-btn").forEach((btn) => {
+          btn.addEventListener("click", () => removeFriend(btn.dataset.id));
+        });
+      }
+    };
+
+    // Listen to both queries and update on changes
+    onSnapshot(sentFriendsQuery, () => updateFriendsList());
+    onSnapshot(receivedFriendsQuery, () => updateFriendsList());
+
+    // Initial load
+    updateFriendsList();
   });
 
   // Handle "Add Friend" form submission
