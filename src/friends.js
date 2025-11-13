@@ -78,11 +78,15 @@ document.addEventListener("DOMContentLoaded", () => {
           for (const req of requests) {
             const fromUserData = await getUserData(req.fromUserId);
             const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            
-            const userName = fromUserData?.displayName || fromUserData?.email || req.fromUserId;
-            const userEmail = fromUserData?.email || '';
-            
+            li.className =
+              "list-group-item d-flex justify-content-between align-items-center";
+
+            const userName =
+              fromUserData?.displayName ||
+              fromUserData?.email ||
+              req.fromUserId;
+            const userEmail = fromUserData?.email || "";
+
             li.innerHTML = `
               <div>
                 <strong>${userName}</strong>
@@ -98,11 +102,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Add event listeners for accept/reject buttons
           friendRequestsList.querySelectorAll(".accept-btn").forEach((btn) => {
-            btn.addEventListener("click", () => acceptFriendRequest(btn.dataset.id));
+            btn.addEventListener("click", () =>
+              acceptFriendRequest(btn.dataset.id)
+            );
           });
 
           friendRequestsList.querySelectorAll(".reject-btn").forEach((btn) => {
-            btn.addEventListener("click", () => rejectFriendRequest(btn.dataset.id));
+            btn.addEventListener("click", () =>
+              rejectFriendRequest(btn.dataset.id)
+            );
           });
         }
       },
@@ -125,43 +133,20 @@ document.addEventListener("DOMContentLoaded", () => {
       where("status", "==", "accepted")
     );
 
-    // Function to update friends list
-    const updateFriendsList = async () => {
+    // Store friends from both queries
+    let sentFriends = new Map();
+    let receivedFriends = new Map();
+
+    // Function to render combined friends list
+    const renderFriendsList = async () => {
       const allFriends = new Map();
 
-      // Get friends where user is sender
-      const sentSnapshot = await new Promise((resolve) => {
-        const unsubscribe = onSnapshot(sentFriendsQuery, (snapshot) => {
-          unsubscribe();
-          resolve(snapshot);
-        });
+      // Combine sent and received friends
+      sentFriends.forEach((friend) => {
+        allFriends.set(friend.id, friend);
       });
-
-      // Get friends where user is receiver
-      const receivedSnapshot = await new Promise((resolve) => {
-        const unsubscribe = onSnapshot(receivedFriendsQuery, (snapshot) => {
-          unsubscribe();
-          resolve(snapshot);
-        });
-      });
-
-      // Combine both queries
-      sentSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        allFriends.set(docSnap.id, {
-          id: docSnap.id,
-          friendId: data.toUserId,
-          ...data
-        });
-      });
-
-      receivedSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        allFriends.set(docSnap.id, {
-          id: docSnap.id,
-          friendId: data.fromUserId,
-          ...data
-        });
+      receivedFriends.forEach((friend) => {
+        allFriends.set(friend.id, friend);
       });
 
       const friends = Array.from(allFriends.values());
@@ -176,11 +161,13 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const friend of friends) {
           const friendData = await getUserData(friend.friendId);
           const li = document.createElement("li");
-          li.className = "list-group-item d-flex justify-content-between align-items-center";
-          
-          const userName = friendData?.displayName || friendData?.email || friend.friendId;
-          const userEmail = friendData?.email || '';
-          
+          li.className =
+            "list-group-item d-flex justify-content-between align-items-center";
+
+          const userName =
+            friendData?.displayName || friendData?.email || friend.friendId;
+          const userEmail = friendData?.email || "";
+
           li.innerHTML = `
             <div>
               <strong>${userName}</strong>
@@ -197,12 +184,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    // Listen to both queries and update on changes
-    onSnapshot(sentFriendsQuery, () => updateFriendsList());
-    onSnapshot(receivedFriendsQuery, () => updateFriendsList());
+    // Listen to sent friends
+    onSnapshot(sentFriendsQuery, (snapshot) => {
+      sentFriends.clear();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        sentFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.toUserId,
+          ...data,
+        });
+      });
+      renderFriendsList();
+    });
 
-    // Initial load
-    updateFriendsList();
+    // Listen to received friends
+    onSnapshot(receivedFriendsQuery, (snapshot) => {
+      receivedFriends.clear();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        receivedFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.fromUserId,
+          ...data,
+        });
+      });
+      renderFriendsList();
+    });
   });
 
   // Handle "Add Friend" form submission
@@ -229,16 +237,25 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // Find user by email
       const friendUserId = await getUserIdByEmail(friendEmail);
-      
+
       if (!friendUserId) {
-        showMessage("User not found. Please check the email address.", "danger");
+        showMessage(
+          "User not found. Please check the email address.",
+          "danger"
+        );
         return;
       }
 
       // Check if friendship already exists
-      const existingFriendship = await checkFriendshipExists(currentUser.uid, friendUserId);
+      const existingFriendship = await checkFriendshipExists(
+        currentUser.uid,
+        friendUserId
+      );
       if (existingFriendship) {
-        showMessage("Friend request already sent or you are already friends.", "warning");
+        showMessage(
+          "Friend request already sent or you are already friends.",
+          "warning"
+        );
         return;
       }
 
@@ -304,20 +321,24 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", email));
-      
+
       return new Promise((resolve) => {
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          unsubscribe();
-          if (!snapshot.empty) {
-            const userDoc = snapshot.docs[0];
-            resolve(userDoc.id);
-          } else {
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            unsubscribe();
+            if (!snapshot.empty) {
+              const userDoc = snapshot.docs[0];
+              resolve(userDoc.id);
+            } else {
+              resolve(null);
+            }
+          },
+          (error) => {
+            console.error("Error finding user by email:", error);
             resolve(null);
           }
-        }, (error) => {
-          console.error("Error finding user by email:", error);
-          resolve(null);
-        });
+        );
       });
     } catch (error) {
       console.error("Error in getUserIdByEmail:", error);
@@ -329,14 +350,14 @@ document.addEventListener("DOMContentLoaded", () => {
   async function checkFriendshipExists(userId1, userId2) {
     try {
       const friendshipsRef = collection(db, "friendships");
-      
+
       // Check both directions
       const q1 = query(
         friendshipsRef,
         where("fromUserId", "==", userId1),
         where("toUserId", "==", userId2)
       );
-      
+
       const q2 = query(
         friendshipsRef,
         where("fromUserId", "==", userId2),
@@ -345,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const [snapshot1, snapshot2] = await Promise.all([
         getDoc(doc(friendshipsRef, "temp")), // Dummy call to avoid empty promises
-        getDoc(doc(friendshipsRef, "temp"))
+        getDoc(doc(friendshipsRef, "temp")),
       ]);
 
       // Use onSnapshot to get real-time data (but we'll use it synchronously here)
@@ -399,7 +420,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Reject friend request
   async function rejectFriendRequest(requestId) {
-    const confirmed = confirm("Are you sure you want to reject this friend request?");
+    const confirmed = confirm(
+      "Are you sure you want to reject this friend request?"
+    );
     if (!confirmed) return;
 
     try {
@@ -427,4 +450,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
