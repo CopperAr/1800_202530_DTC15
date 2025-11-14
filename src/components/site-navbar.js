@@ -1,7 +1,6 @@
 // Import specific functions from the Firebase Auth SDK
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "/src/firebaseConfig.js";
-import { logoutUser } from "/src/authentication.js";
 
 class SiteNavbar extends HTMLElement {
   constructor() {
@@ -41,17 +40,13 @@ class SiteNavbar extends HTMLElement {
     authControls.innerHTML = "";
 
     onAuthStateChanged(auth, (user) => {
-      let updatedAuthControl;
       if (user) {
         this.homeLink?.setAttribute("href", "main.html");
-        updatedAuthControl = `<button class="btn btn-outline-light" id="signOutBtn" type="button" style="min-width: 80px;">Log out</button>`;
-        authControls.innerHTML = updatedAuthControl;
-        const signOutBtn = authControls.querySelector("#signOutBtn");
-        signOutBtn?.addEventListener("click", logoutUser);
+        authControls.innerHTML = "";
       } else {
         this.homeLink?.setAttribute("href", "index.html");
-        updatedAuthControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
-        authControls.innerHTML = updatedAuthControl;
+        const loginControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
+        authControls.innerHTML = loginControl;
       }
     });
 }
