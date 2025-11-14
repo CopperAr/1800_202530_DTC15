@@ -2,159 +2,318 @@
 
 ## Overview
 
-Hangout is a client-side JavaScript web application that helps users discover and explore social hangouts or hiking trails. The app displays a curated list of hangout locations, each with details such as name, location, difficulty, and image. Users can browse the list and mark their favorite spots for easy access later.
+Hangout is a social web application that helps users discover hangout locations, manage their schedule, and connect with friends. Built with Firebase backend services, the app provides real-time data synchronization and secure user authentication.
 
-Developed for the COMP 1800 course, this project applies User-Centred Design practices and agile project management, and demonstrates integration with Firebase backend services for storing user favorites.
+Developed for the COMP 1800 course at BCIT, this project demonstrates User-Centred Design practices, agile project management, and modern web development technologies.
 
 ---
 
 ## Features
 
-- Browse a list of curated hangouts and trails with images and details
-- Mark and unmark locations as favorites
-- View a personalized list of favorite hangouts
-- **Friends System**: Add friends, send/accept friend requests, and view your friends list
-- **Schedule Management**: Create and manage personal events with calendar integration
-- **User Authentication**: Secure login and signup with Firebase Authentication
-- Responsive design for desktop and mobile
+- **User Authentication**: Secure signup and login with Firebase Authentication
+- **Main Dashboard**: Personalized homepage with quote of the day and friends overview
+- **Friends System**: 
+  - Add friends using their email address
+  - Send and receive friend requests
+  - View and manage your friends list
+  - Duplicate-proof friendship storage with canonical pairing
+- **Schedule Management**: Create, view, and manage personal events with calendar integration
+- **Hangout Discovery**: Browse curated hangout locations and trails
+- **Profile Management**: View profile information and sign out functionality
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ---
 
 ## Technologies Used
 
-Example:
-
-- **Frontend**: HTML, CSS, JavaScript
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Framework**: Bootstrap 5 for responsive UI
 - **Build Tool**: [Vite](https://vitejs.dev/)
-- **Backend**: Firebase for hosting
-- **Database**: Firestore
+- **Backend**: Firebase Authentication & Firestore Database
+- **Hosting**: Firebase Hosting
+- **Version Control**: Git & GitHub
 
 ---
 
-## Usage
+## Getting Started
 
-### Getting Started
+### Prerequisites
 
-1. **Install dependencies**:
+- Node.js (v14 or higher)
+- npm or yarn
+- Firebase account with a configured project
+
+### Installation
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/CopperAr/1800_202530_DTC15.git
+   cd 1800_202530_DTC15
+   ```
+
+2. **Install dependencies**:
 
    ```bash
    npm install
    ```
 
-2. **Run the development server**:
+3. **Configure Firebase**:
+   - Update `src/firebaseConfig.js` with your Firebase project credentials
+   - Set up Firestore security rules (see Firebase Setup section below)
+
+4. **Run the development server**:
 
    ```bash
    npm run dev
    ```
 
-3. Open your browser and visit the URL shown in the terminal (usually `http://localhost:5173`).
+5. Open your browser and navigate to `http://localhost:5173`
 
-### Using the Application
+### Building for Production
 
-1. **Login/Signup**: Create an account or log in to access features
-2. **Main Page**: Browse hangout locations and view your dashboard
-3. **Friends**:
-   - Visit the Friends page to manage your connections
-   - Add friends using their User ID (get it from Profile page)
-   - Accept or reject friend requests
-   - View your friends list
-4. **Schedule**: Create and manage your personal events with the calendar
-5. **Profile**: View your User ID and manage your account settings
+```bash
+npm run build
+```
 
-### Setting Up Friends Feature
+The production-ready files will be in the `dist/` directory.
 
-**Important**: You must configure Firestore security rules for the friends feature to work.
+---
+
+## Firebase Setup
+
+### Firestore Security Rules
+
+To enable the friends feature and secure your database, configure these rules in Firebase Console:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Friendships collection
+    match /friendships/{friendshipId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.fromUserId || 
+         request.auth.uid == resource.data.toUserId);
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.fromUserId;
+      allow update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.fromUserId || 
+         request.auth.uid == resource.data.toUserId);
+    }
+    
+    // Events collection
+    match /events/{eventId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Quotes collection (read-only for all authenticated users)
+    match /quotes/{quoteId} {
+      allow read: if request.auth != null;
+    }
+  }
+}
+```
+
+### Required Firestore Collections
+
+The app expects these collections in your Firestore database:
+
+1. **users**: User profile data
+   - `displayName` (string)
+   - `email` (string)
+   - `pronouns` (string)
+   - `city` (string)
+
+2. **friendships**: Friend relationships
+   - `fromUserId` (string)
+   - `toUserId` (string)
+   - `pairKey` (string) - canonical key for duplicate prevention
+   - `status` (string): "pending", "accepted", or "rejected"
+   - `createdAt` (timestamp)
+   - `updatedAt` (timestamp)
+
+3. **events**: User calendar events
+   - `userId` (string)
+   - `title` (string)
+   - `description` (string)
+   - `startTime` (timestamp)
+   - `endTime` (timestamp)
+
+4. **quotes** (optional): Daily motivational quotes
+   - `text` (string)
+   - `author` (string)
+
+---
+
+## Usage Guide
+
+### 1. Authentication
+- Navigate to the landing page (`index.html`)
+- Click "Sign Up" to create a new account or "Log In" with existing credentials
+- All features require authentication
+
+### 2. Main Dashboard
+- After login, you'll see your personalized dashboard (`main.html`)
+- View quote of the day
+- See a preview of your friends (up to 5)
+- Quick access to add friends or import contacts
+
+### 3. Friends Feature
+- Visit the Friends page from the navigation bar
+- **Add a friend**: Enter their email address and click "Add Friend"
+- **Manage requests**: Accept or reject incoming friend requests
+- **View friends**: All accepted friendships appear in "My Friends" section
+- The system automatically prevents duplicate friendships using canonical pairing
+
+### 4. Schedule
+- Access the Schedule page to view your calendar
+- Create new events with title, description, start and end times
+- Edit or delete existing events
+
+### 5. Hangouts
+- Browse curated hangout locations and trails
+- View location details, difficulty ratings, and images
+
+### 6. Profile
+- View your account information
+- Copy your email to share with friends
+- Sign out from your account
 
 ---
 
 ## Project Structure
 
 ```
-hangout/
-├── images/                          # Image assets
+1800_202530_DTC15/
 ├── src/
 │   ├── components/
-│   │   ├── site-navbar.js          # Navigation bar component
-│   │   └── site-footer.js          # Footer component
-│   ├── app.js                      # Main application logic
-│   ├── authentication.js           # Firebase authentication functions
-│   ├── firebaseConfig.js           # Firebase configuration
-│   ├── friends.js                  # Friends feature logic ✨ NEW
-│   ├── loginSignup.js              # Login/signup page logic
-│   ├── main.js                     # Main page logic
-│   ├── profile.js                  # Profile page logic
-│   └── schedule.js                 # Schedule/calendar logic
+│   │   ├── site-navbar.js         # Reusable navigation bar web component
+│   │   └── site-footer.js         # Reusable footer web component
+│   ├── app.js                     # Main application entry point
+│   ├── authentication.js          # Firebase auth helper functions
+│   ├── firebaseConfig.js          # Firebase initialization
+│   ├── friends.js                 # Friends feature logic (add, accept, display)
+│   ├── generateFriendCode.js      # Friend code utilities
+│   ├── hangout.js                 # Hangout discovery page logic
+│   ├── loginSignup.js             # Login/signup page logic
+│   ├── main.js                    # Dashboard logic and friends preview
+│   ├── profile.js                 # Profile page and sign out logic
+│   └── schedule.js                # Calendar and event management
 ├── styles/
-│   └── style.css                   # Global styles
-├── index.html                      # Landing page
-├── login.html                      # Login/signup page
-├── main.html                       # Main dashboard
-├── friends.html                    # Friends management page ✨ NEW
-├── profile.html                    # User profile page
-├── schedule.html                   # Calendar/schedule page
-├── package.json
-├── package-lock.json
-└── README.md
+│   └── style.css                  # Global styles and theme
+├── images/                        # Static image assets
+├── dist/                          # Production build output
+├── index.html                     # Landing page
+├── login.html                     # Login/signup page
+├── main.html                      # Main dashboard
+├── friends.html                   # Friends management page
+├── hangout.html                   # Hangout discovery page
+├── profile.html                   # User profile page
+├── schedule.html                  # Calendar page
+├── package.json                   # Node dependencies
+└── README.md                      # Project documentation
 ```
+
+---
+
+## Key Technical Implementations
+
+### Friends System Architecture
+
+The friends feature uses a **canonical pairKey** approach to prevent duplicate friendships:
+
+1. When user A sends a request to user B, the system:
+   - Sorts both user IDs alphabetically
+   - Creates a unique `pairKey` (e.g., "uidA__uidB")
+   - Checks if a friendship with this `pairKey` already exists
+   - Creates new document only if it doesn't exist
+
+2. When displaying friends:
+   - Two queries fetch friendships where user is sender OR receiver
+   - Results are deduplicated using a Map keyed by friend's UID
+   - Ensures each friend appears only once in the UI
+
+3. Benefits:
+   - No duplicate friendship documents in Firestore
+   - Efficient querying and real-time updates
+   - Consistent data structure regardless of who initiated the friendship
+
+### Real-time Updates
+
+The app uses Firestore `onSnapshot` listeners for:
+- Friend requests (automatic UI updates when requests arrive)
+- Friends list (live updates when friends are added/removed)
+- Events/schedule (calendar updates in real-time)
+
+---
+
+## Known Limitations
+
+- Friends cannot view each other's schedules (planned for future release)
+- No notification system for friend requests yet
+- Limited hangout location data (no live updates or weather integration)
+- Accessibility features can be improved (ARIA labels, keyboard navigation)
+
+---
+
+## Future Enhancements
+
+- **Friend Features**:
+  - Friend search and suggestions
+  - View friends' availability
+  - Group chat and messaging
+  - Notifications for friend requests and events
+- **Schedule**:
+  - Shared calendars with friends
+  - Suggest overlapping free times for hangouts
+  - Event reminders
+- **Hangouts**:
+  - Map view with location pins
+  - Filtering by category, difficulty, distance
+  - User-submitted hangout locations
+  - Reviews and ratings
+- **General**:
+  - Dark mode toggle
+  - Progressive Web App (PWA) support
+  - Push notifications
+  - Multi-language support
 
 ---
 
 ## Contributors
 
-- **Fara** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: I play guitar.
-- **Gaocheng Chen** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Loves solving Rubik's Cubes in under a minute.
-- **David** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: I like playing video games and listening to music.
+- **Fara** – BCIT CST Student. Fun fact: Plays guitar
+- **Gaocheng Chen** – BCIT CST Student. Fun fact: Solves Rubik's Cubes in under a minute
+- **David** – BCIT CST Student. Fun fact: Enjoys video games and music
 
 ---
 
 ## Acknowledgments
 
-- Data and images are for demonstration purposes only.
-- Code snippets were adapted from resources such as [Stack Overflow](https://stackoverflow.com/) and [MDN Web Docs](https://developer.mozilla.org/).
-- Icons sourced from [FontAwesome](https://fontawesome.com/) and images from [Unsplash](https://unsplash.com/).
-
----
-
-## Friends Feature
-
-The friends system allows users to connect with each other:
-
-- **Add Friends**: Send friend requests using User IDs
-- **Manage Requests**: Accept or reject incoming friend requests
-- **View Friends**: See all your accepted friends in one place
-- **Real-time Updates**: Friend list updates automatically without refresh
-
-### Setup
-
-1. Configure Firestore security rules in Firebase Console
-2. Get a friend's User ID from their profile page
-3. Visit the Friends page and send a request
-4. Your friend accepts the request
-
----
-
-## Limitations and Future Work
-
-### Limitations
-
-- Limited details on each hangout spot (e.g., no live updates or weather info)
-- Accessibility features can be further improved
-- Friends cannot see each other's schedules yet
-
-### Future Work
-
-- Implement map view and route directions
-- Add filtering and sorting options (e.g., by category, location)
-- Introduce a dark mode for better usability in low-light conditions
-- **Friend Features**:
-  - View friends' availability and schedules
-  - Suggest overlapping free times for hangouts
-  - Friend search functionality
-  - Friend grouping and categories
-  - Notifications for friend requests
+- Firebase for backend infrastructure and real-time database
+- Bootstrap team for responsive UI components
+- Icons from [FontAwesome](https://fontawesome.com/)
+- Images from [Unsplash](https://unsplash.com/)
+- Code references from [MDN Web Docs](https://developer.mozilla.org/) and [Stack Overflow](https://stackoverflow.com/)
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License.
+
+---
+
+## Contact & Support
+
+For questions or issues, please open an issue on the GitHub repository or contact the development team through BCIT CST channels.
