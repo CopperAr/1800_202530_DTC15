@@ -1,3 +1,8 @@
+/* Global background consistency */
+body {
+    background-color: #ffffff;
+  }
+
 /* Hero Section */
 .hero-nav {
     background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
