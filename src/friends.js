@@ -213,6 +213,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // add helper to get canonical pair key
+  function getPairKey(uid1, uid2) {
+    return [uid1, uid2].sort().join("__");
+  }
+
   // Handle "Add Friend" form submission
   addFriendForm.addEventListener("submit", async (e) => {
     e.preventDefault();
