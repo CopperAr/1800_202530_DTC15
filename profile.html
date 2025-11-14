@@ -24,38 +24,89 @@
     <main class="container my-4">
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
-          <div class="card shadow-sm">
-            <div class="card-body text-center">
-              <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="mb-3">
-                <circle cx="50" cy="50" r="50" fill="#6c757d"/>
-                <circle cx="50" cy="40" r="15" fill="#f8f9fa"/>
-                <path d="M 30 75 Q 30 60 50 60 Q 70 60 70 75 Z" fill="#f8f9fa"/>
-              </svg>
-              
-              <h4 id="name-goes-here" class="mb-3">displayName</h4>
-            </div>
-          </div>
+          
+          <!-- Profile View -->
+          <div id="profileView" class="">
+            <div class="card shadow-sm">
+              <div class="card-body text-center">
+                <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="mb-3">
+                  <circle cx="50" cy="50" r="50" fill="#6c757d"/>
+                  <circle cx="50" cy="40" r="15" fill="#f8f9fa"/>
+                  <path d="M 30 75 Q 30 60 50 60 Q 70 60 70 75 Z" fill="#f8f9fa"/>
+                </svg>
+                
+                <h4 id="name-goes-here" class="mb-2">displayName</h4>
+                <p id="pronouns-goes-here" class="text-muted mb-1"></p>
+                <p id="city-goes-here" class="text-muted mb-3"></p>
 
-          <div class="card shadow-sm mt-4">
-            <div class="card-body">
-              <h5 class="card-title mb-3">Account</h5>
-              <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-primary">Edit Profile</button>
-                <button type="button" class="btn btn-outline-secondary">Privacy Settings</button>
-                <button type="button" class="btn btn-outline-danger" id="signOutBtn">Sign Out</button>
+                <div class="input-group mb-3 justify-content-center">
+                  <input type="text" id="email-goes-here" class="form-control" value="email" readonly style="max-width: 250px;">
+                  <button class="btn btn-outline-secondary" type="button" id="copyButton">Copy</button>
+                </div>
+                <p id="feedbackMessage" class="text-success" style="display: none;">Copied!</p>
+              </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+              <div class="card-body">
+                <h5 class="card-title mb-3">Account</h5>
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-outline-primary" id="editBtn">Edit Profile</button>
+                  <button type="button" class="btn btn-outline-secondary">Privacy Settings</button>
+                  <button type="button" class="btn btn-outline-danger" id="signOutBtn">Sign Out</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+              <div class="card-body">
+                <h5 class="card-title mb-3">Support</h5>
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-outline-secondary">Contact</button>
+                  <button type="button" class="btn btn-outline-secondary">FAQ</button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="card shadow-sm mt-4">
-            <div class="card-body">
-              <h5 class="card-title mb-3">Support</h5>
-              <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-secondary">Contact</button>
-                <button type="button" class="btn btn-outline-secondary">FAQ</button>
+          <!-- Edit Profile View -->
+          <div id="editProfileView" class="d-none">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <h4 class="card-title mb-4">Edit Profile</h4>
+                
+                <div class="text-center mb-4">
+                  <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="mb-3">
+                    <circle cx="50" cy="50" r="50" fill="#6c757d"/>
+                    <circle cx="50" cy="40" r="15" fill="#f8f9fa"/>
+                    <path d="M 30 75 Q 30 60 50 60 Q 70 60 70 75 Z" fill="#f8f9fa"/>
+                  </svg>
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Change Profile Picture</button>
+                </div>
+
+                <form>
+                  <div class="mb-3">
+                    <label for="nameInput" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="nameInput" placeholder="Enter your name">
+                  </div>
+                  <div class="mb-3">
+                    <label for="pronounInput" class="form-label">Pronouns</label>
+                    <input type="text" class="form-control" id="pronounInput" placeholder="e.g. she/her, he/him, they/them">
+                  </div>
+                  <div class="mb-3">
+                    <label for="cityInput" class="form-label">City</label>
+                    <input type="text" class="form-control" id="cityInput" placeholder="Enter your city">
+                  </div>
+                  
+                  <div class="d-flex gap-2 justify-content-end mt-4">
+                    <button type="button" class="btn btn-secondary" id="discardEditBtn">Discard Changes</button>
+                    <button type="button" class="btn btn-primary" id="saveButton">Save</button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </main>
