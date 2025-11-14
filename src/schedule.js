@@ -22,17 +22,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // create the calendar instance
-    const calendar = new window.FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
-        height: "auto",
-        selectable: true,
-        headerToolbar: {
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
-        },
+    
 
+    // --- responsive helpers (add just above the calendar init) ---
+    function isMobile() {
+        return window.matchMedia("(max-width: 576px)").matches;
+    }
+
+    // --- REPLACE your calendar init with this ---
+    const calendar = new window.FullCalendar.Calendar(calendarEl, {
+        // (optional) plays nicer with your Bootstrap look
+        themeSystem: 'bootstrap5',
+
+        // views
+        initialView: isMobile() ? 'dayGridMonth' : 'dayGridMonth',
+        height: 'auto',
+        expandRows: true,
+        dayMaxEventRows: true,
+        selectable: true,
+
+        // toolbar adapts to screen width
+        headerToolbar: isMobile()
+            ? { left: 'prev,next today', center: 'title', right: '' }
+            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+
+        // keep the short button labels (you can remove this if you prefer defaults)
+        buttonText: { today: 'today', month: 'month', week: 'week', day: 'day' },
+
+        // ===== keep your existing handlers unchanged =====
         dateClick: (info) => {
             // click on a day fills the form date
             dateInput.value = info.dateStr;
@@ -41,9 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         eventClick: async (info) => {
             const event = info.event;
-            const startText = event.start
-                ? event.start.toLocaleString()
-                : "unknown start";
+            const startText = event.start ? event.start.toLocaleString() : "unknown start";
             const endText = event.end ? event.end.toLocaleString() : "";
 
             const ok = confirm(
@@ -62,9 +77,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Could not delete event. Please try again.");
             }
         },
+
+        // when viewport changes, simplify/restore toolbar accordingly
+        windowResize: () => {
+            calendar.setOption(
+                'headerToolbar',
+                isMobile()
+                    ? { left: 'prev,next today', center: 'title', right: '' }
+                    : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }
+            );
+        },
     });
 
     calendar.render();
+
 
     // authorization + Firestore wiring
     onAuthReady((user) => {

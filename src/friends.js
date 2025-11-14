@@ -78,14 +78,19 @@ document.addEventListener("DOMContentLoaded", () => {
           for (const req of requests) {
             const fromUserData = await getUserData(req.fromUserId);
             const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            
-            const userName = fromUserData?.displayName || fromUserData?.email || req.fromUserId;
-            
+            li.className =
+              "list-group-item d-flex justify-content-between align-items-center";
+
+            const userName =
+              fromUserData?.displayName ||
+              fromUserData?.email ||
+              req.fromUserId;
+            const userEmail = fromUserData?.email || "";
+
             li.innerHTML = `
               <div>
                 <strong>${userName}</strong>
-                <br><small class="text-muted">${req.fromUserId}</small>
+                <br><small class="text-muted">${userEmail}</small>
               </div>
               <div class="btn-group btn-group-sm" role="group">
                 <button class="btn btn-success btn-sm accept-btn" data-id="${req.id}">Accept</button>
@@ -97,11 +102,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Add event listeners for accept/reject buttons
           friendRequestsList.querySelectorAll(".accept-btn").forEach((btn) => {
-            btn.addEventListener("click", () => acceptFriendRequest(btn.dataset.id));
+            btn.addEventListener("click", () =>
+              acceptFriendRequest(btn.dataset.id)
+            );
           });
 
           friendRequestsList.querySelectorAll(".reject-btn").forEach((btn) => {
-            btn.addEventListener("click", () => rejectFriendRequest(btn.dataset.id));
+            btn.addEventListener("click", () =>
+              rejectFriendRequest(btn.dataset.id)
+            );
           });
         }
       },
@@ -110,60 +119,98 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     );
 
-    // Listen to accepted friendships (where user is either fromUserId or toUserId && status == 'accepted')
-    const friendsQuery = query(
+    // Listen to accepted friendships where current user is the sender
+    const sentFriendsQuery = query(
       collection(db, "friendships"),
+      where("fromUserId", "==", uid),
       where("status", "==", "accepted")
     );
 
-    onSnapshot(
-      friendsQuery,
-      async (snapshot) => {
-        myFriendsList.innerHTML = "";
-        const friends = [];
-
-        for (const docSnap of snapshot.docs) {
-          const data = docSnap.data();
-          // Only include if current user is part of this friendship
-          if (data.fromUserId === uid || data.toUserId === uid) {
-            const friendId = data.fromUserId === uid ? data.toUserId : data.fromUserId;
-            friends.push({ id: docSnap.id, friendId, ...data });
-          }
-        }
-
-        friendCountBadge.textContent = friends.length;
-
-        if (friends.length === 0) {
-          myFriendsList.innerHTML =
-            '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
-        } else {
-          for (const friend of friends) {
-            const friendData = await getUserData(friend.friendId);
-            const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            
-            const userName = friendData?.displayName || friendData?.email || friend.friendId;
-            
-            li.innerHTML = `
-              <div>
-                <strong>${userName}</strong>
-                <br><small class="text-muted">${friend.friendId}</small>
-              </div>
-              <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
-            `;
-            myFriendsList.appendChild(li);
-          }
-
-          // Add event listeners for remove buttons
-          myFriendsList.querySelectorAll(".remove-btn").forEach((btn) => {
-            btn.addEventListener("click", () => removeFriend(btn.dataset.id));
-          });
-        }
-      },
-      (error) => {
-        console.error("Error listening to friends:", error);
-      }
+    // Listen to accepted friendships where current user is the receiver
+    const receivedFriendsQuery = query(
+      collection(db, "friendships"),
+      where("toUserId", "==", uid),
+      where("status", "==", "accepted")
     );
+
+    // Store friends from both queries
+    let sentFriends = new Map();
+    let receivedFriends = new Map();
+
+    // Function to render combined friends list
+    const renderFriendsList = async () => {
+      const allFriends = new Map();
+
+      // Combine sent and received friends, using friendId as key to avoid duplicates
+      sentFriends.forEach((friend) => {
+        allFriends.set(friend.friendId, friend);
+      });
+      receivedFriends.forEach((friend) => {
+        allFriends.set(friend.friendId, friend);
+      });
+
+      const friends = Array.from(allFriends.values());
+      friendCountBadge.textContent = friends.length;
+
+      myFriendsList.innerHTML = "";
+
+      if (friends.length === 0) {
+        myFriendsList.innerHTML =
+          '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
+      } else {
+        for (const friend of friends) {
+          const friendData = await getUserData(friend.friendId);
+          const li = document.createElement("li");
+          li.className =
+            "list-group-item d-flex justify-content-between align-items-center";
+
+          const userName =
+            friendData?.displayName || friendData?.email || friend.friendId;
+          const userEmail = friendData?.email || "";
+
+          li.innerHTML = `
+            <div>
+              <strong>${userName}</strong>
+              <br><small class="text-muted">${userEmail}</small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
+          `;
+          myFriendsList.appendChild(li);
+        }
+
+        myFriendsList.querySelectorAll(".remove-btn").forEach((btn) => {
+          btn.addEventListener("click", () => removeFriend(btn.dataset.id));
+        });
+      }
+    };
+
+    // Listen to sent friends
+    onSnapshot(sentFriendsQuery, (snapshot) => {
+      sentFriends.clear();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        sentFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.toUserId,
+          ...data,
+        });
+      });
+      renderFriendsList();
+    });
+
+    // Listen to received friends
+    onSnapshot(receivedFriendsQuery, (snapshot) => {
+      receivedFriends.clear();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        receivedFriends.set(docSnap.id, {
+          id: docSnap.id,
+          friendId: data.fromUserId,
+          ...data,
+        });
+      });
+      renderFriendsList();
+    });
   });
 
   // Handle "Add Friend" form submission
@@ -175,30 +222,40 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const friendUserId = friendUserIdInput.value.trim();
+    const friendEmail = friendUserIdInput.value.trim();
 
-    if (!friendUserId) {
-      showMessage("Please enter a User ID.", "danger");
+    if (!friendEmail) {
+      showMessage("Please enter an email address.", "danger");
       return;
     }
 
-    if (friendUserId === currentUser.uid) {
+    if (friendEmail === currentUser.email) {
       showMessage("You cannot add yourself as a friend.", "danger");
       return;
     }
 
     try {
-      // Check if user exists
-      const userExists = await checkUserExists(friendUserId);
-      if (!userExists) {
-        showMessage("User not found. Please check the User ID.", "danger");
+      // Find user by email
+      const friendUserId = await getUserIdByEmail(friendEmail);
+
+      if (!friendUserId) {
+        showMessage(
+          "User not found. Please check the email address.",
+          "danger"
+        );
         return;
       }
 
       // Check if friendship already exists
-      const existingFriendship = await checkFriendshipExists(currentUser.uid, friendUserId);
+      const existingFriendship = await checkFriendshipExists(
+        currentUser.uid,
+        friendUserId
+      );
       if (existingFriendship) {
-        showMessage("Friend request already sent or you are already friends.", "warning");
+        showMessage(
+          "Friend request already sent or you are already friends.",
+          "warning"
+        );
         return;
       }
 
@@ -259,18 +316,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Helper function to find user UID by email
+  async function getUserIdByEmail(email) {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", email));
+
+      return new Promise((resolve) => {
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            unsubscribe();
+            if (!snapshot.empty) {
+              const userDoc = snapshot.docs[0];
+              resolve(userDoc.id);
+            } else {
+              resolve(null);
+            }
+          },
+          (error) => {
+            console.error("Error finding user by email:", error);
+            resolve(null);
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error in getUserIdByEmail:", error);
+      return null;
+    }
+  }
+
   // Helper function to check if friendship already exists
   async function checkFriendshipExists(userId1, userId2) {
     try {
       const friendshipsRef = collection(db, "friendships");
-      
+
       // Check both directions
       const q1 = query(
         friendshipsRef,
         where("fromUserId", "==", userId1),
         where("toUserId", "==", userId2)
       );
-      
+
       const q2 = query(
         friendshipsRef,
         where("fromUserId", "==", userId2),
@@ -279,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const [snapshot1, snapshot2] = await Promise.all([
         getDoc(doc(friendshipsRef, "temp")), // Dummy call to avoid empty promises
-        getDoc(doc(friendshipsRef, "temp"))
+        getDoc(doc(friendshipsRef, "temp")),
       ]);
 
       // Use onSnapshot to get real-time data (but we'll use it synchronously here)
@@ -319,11 +406,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Accept friend request
   async function acceptFriendRequest(requestId) {
     try {
+      console.log("Accepting friend request:", requestId);
       await updateDoc(doc(db, "friendships", requestId), {
         status: "accepted",
         updatedAt: serverTimestamp(),
       });
-      console.log("Friend request accepted");
+      console.log("Friend request accepted successfully");
     } catch (error) {
       console.error("Error accepting friend request:", error);
       alert("Failed to accept friend request. Please try again.");
@@ -332,7 +420,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Reject friend request
   async function rejectFriendRequest(requestId) {
-    const confirmed = confirm("Are you sure you want to reject this friend request?");
+    const confirmed = confirm(
+      "Are you sure you want to reject this friend request?"
+    );
     if (!confirmed) return;
 
     try {
@@ -360,4 +450,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
