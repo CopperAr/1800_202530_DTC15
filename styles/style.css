@@ -14,15 +14,15 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2rem;
     padding: 1rem 2rem;
     font-weight: 500;
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .top-nav .nav-links {
     display: flex;
-    gap: 1.25rem;
+    gap: 2rem;
     align-items: center;
     margin-left: auto;
   }
@@ -38,15 +38,15 @@
 
   .top-nav .nav-links a {
     position: relative;
-    padding: 0.25rem 0;
+    padding: 0.5rem 0.25rem;
   }
 
   .nav-avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.35);
     background: rgba(255, 255, 255, 0.12);
@@ -58,8 +58,8 @@
     transform: translateY(-1px);
   }
   .nav-avatar svg {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
 
   .mobile-avatar-btn {
