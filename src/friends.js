@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sentFriends.clear();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        sentFriends.set(docSnap.id, {
+        sentFriends.set(data.toUserId, {
           id: docSnap.id,
           friendId: data.toUserId,
           ...data,
@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
       receivedFriends.clear();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        receivedFriends.set(docSnap.id, {
+        receivedFriends.set(data.fromUserId, {
           id: docSnap.id,
           friendId: data.fromUserId,
           ...data,
