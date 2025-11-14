@@ -52,11 +52,16 @@ Developed for the COMP 1800 course at BCIT, this project demonstrates User-Centr
    cd 1800_202530_DTC15
    ```
 
-2. **Install dependencies**:
+2. **Install dependencies** (includes Firebase SDK):
 
    ```bash
    npm install
    ```
+
+   This will install all required packages including:
+   - `firebase` - Firebase SDK for authentication and Firestore
+   - `bootstrap` - UI framework
+   - `vite` - Build tool
 
 3. **Configure Firebase**:
    - Update `src/firebaseConfig.js` with your Firebase project credentials
@@ -292,9 +297,9 @@ The app uses Firestore `onSnapshot` listeners for:
 
 ## Contributors
 
-- **Fara** – BCIT CST Student. Fun fact: Plays guitar
-- **Gaocheng Chen** – BCIT CST Student. Fun fact: Solves Rubik's Cubes in under a minute
-- **David** – BCIT CST Student. Fun fact: Enjoys video games and music
+- **Fara** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: I play guitar.
+- **Gaocheng Chen** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Loves solving Rubik's Cubes in under a minute.
+- **David** – BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: I like playing video games and listening to music.
 
 ---
 
@@ -305,12 +310,6 @@ The app uses Firestore `onSnapshot` listeners for:
 - Icons from [FontAwesome](https://fontawesome.com/)
 - Images from [Unsplash](https://unsplash.com/)
 - Code references from [MDN Web Docs](https://developer.mozilla.org/) and [Stack Overflow](https://stackoverflow.com/)
-
----
-
-## License
-
-This project is licensed under the MIT License.
 
 ---
 
