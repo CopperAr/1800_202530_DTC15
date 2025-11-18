@@ -20,7 +20,9 @@ function readQuote(day) {
   function applyTextFromSnap(snap) {
     if (snap?.exists()) {
       const data = snap.data() || {};
-      const text = data.quote || data.quotes || '';
+      const text = data.quote || data.quotes || data.text || '';
+      
+      // Display the quote as-is from database
       quoteEl.textContent = text;
       return !!text;
     }
