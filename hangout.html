@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -69,6 +68,16 @@
                         Create Hangout
                     </button>
                 </div>
+
+                <!-- Participants (friends) -->
+                <div class="col-12">
+                    <fieldset class="border rounded p-3">
+                        <legend class="float-none w-auto px-2 h6 mb-0">Participants (friends)</legend>
+                        <div id="friendsList" class="row gy-2 mt-1"><!-- filled by JS --></div>
+                        <small class="text-muted">Tip: you're automatically included as a participant.</small>
+                    </fieldset>
+                </div>
+
             </form>
         </section>
 
@@ -99,6 +108,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="hangoutDetailsBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Participants modal -->
+    <div class="modal fade" id="editParticipantsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit participants</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editFriendsList" class="row gy-2"><!-- filled by JS --></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveParticipantsBtn" type="button" class="btn btn-primary">Save</button>
+                </div>
             </div>
         </div>
     </div>

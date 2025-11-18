@@ -16,7 +16,26 @@ import {
   serverTimestamp,
   or,
   and,
+  getDocs,
 } from "firebase/firestore";
+
+// For nice labels (displayName > name > email > uid)
+const friendLabelCache = new Map();
+async function labelForUser(uid) {
+  if (friendLabelCache.has(uid)) return friendLabelCache.get(uid);
+  let label = uid;
+  try {
+    const u = await getDoc(doc(db, "users", uid));
+    if (u.exists()) {
+      const d = u.data();
+      label = d.displayName || d.name || d.email || uid;
+    }
+  } catch (_) {
+    // ignore
+  }
+  friendLabelCache.set(uid, label);
+  return label;
+}
 
 let currentUser = null;
 
@@ -40,10 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Check authentication
   onAuthReady((user) => {
     if (!user) {
-      // Not logged in → redirect to login page
       window.location.href = "login.html";
       return;
     }
@@ -51,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentUser = user;
     const uid = user.uid;
 
-    // Listen to incoming friend requests (where toUserId == current user && status == 'pending')
+    /* Pending friend requests */
     const requestsQuery = query(
       collection(db, "friendships"),
       where("toUserId", "==", uid),
@@ -62,163 +79,149 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsQuery,
       async (snapshot) => {
         friendRequestsList.innerHTML = "";
-        const requests = [];
-
-        for (const docSnap of snapshot.docs) {
-          const data = docSnap.data();
-          requests.push({ id: docSnap.id, ...data });
-        }
+        const requests = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
 
         requestCountBadge.textContent = requests.length;
 
-        if (requests.length === 0) {
+        if (!requests.length) {
           friendRequestsList.innerHTML =
             '<li class="list-group-item text-muted">No pending requests.</li>';
-        } else {
-          for (const req of requests) {
-            const fromUserData = await getUserData(req.fromUserId);
-            const li = document.createElement("li");
-            li.className =
-              "list-group-item d-flex justify-content-between align-items-center";
-
-            const userName =
-              fromUserData?.displayName ||
-              fromUserData?.email ||
-              req.fromUserId;
-            const userEmail = fromUserData?.email || "";
-
-            li.innerHTML = `
-              <div>
-                <strong>${userName}</strong>
-                <br><small class="text-muted">${userEmail}</small>
-              </div>
-              <div class="btn-group btn-group-sm" role="group">
-                <button class="btn btn-success btn-sm accept-btn" data-id="${req.id}">Accept</button>
-                <button class="btn btn-danger btn-sm reject-btn" data-id="${req.id}">Reject</button>
-              </div>
-            `;
-            friendRequestsList.appendChild(li);
-          }
-
-          // Add event listeners for accept/reject buttons
-          friendRequestsList.querySelectorAll(".accept-btn").forEach((btn) => {
-            btn.addEventListener("click", () =>
-              acceptFriendRequest(btn.dataset.id)
-            );
-          });
-
-          friendRequestsList.querySelectorAll(".reject-btn").forEach((btn) => {
-            btn.addEventListener("click", () =>
-              rejectFriendRequest(btn.dataset.id)
-            );
-          });
+          return;
         }
-      },
-      (error) => {
-        console.error("Error listening to friend requests:", error);
-      }
-    );
 
-    // Listen to accepted friendships where current user is the sender
-    const sentFriendsQuery = query(
-      collection(db, "friendships"),
-      where("fromUserId", "==", uid),
-      where("status", "==", "accepted")
-    );
-
-    // Listen to accepted friendships where current user is the receiver
-    const receivedFriendsQuery = query(
-      collection(db, "friendships"),
-      where("toUserId", "==", uid),
-      where("status", "==", "accepted")
-    );
-
-    // Store friends from both queries
-    let sentFriends = new Map();
-    let receivedFriends = new Map();
-
-    // Function to render combined friends list
-    const renderFriendsList = async () => {
-      const allFriends = new Map();
-
-      // Combine sent and received friends, using friendId as key to avoid duplicates
-      sentFriends.forEach((friend) => {
-        allFriends.set(friend.friendId, friend);
-      });
-      receivedFriends.forEach((friend) => {
-        allFriends.set(friend.friendId, friend);
-      });
-
-      const friends = Array.from(allFriends.values());
-      friendCountBadge.textContent = friends.length;
-
-      myFriendsList.innerHTML = "";
-
-      if (friends.length === 0) {
-        myFriendsList.innerHTML =
-          '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
-      } else {
-        for (const friend of friends) {
-          const friendData = await getUserData(friend.friendId);
+        for (const req of requests) {
+          const fromUserData = await getUserData(req.fromUserId);
           const li = document.createElement("li");
           li.className =
             "list-group-item d-flex justify-content-between align-items-center";
 
           const userName =
-            friendData?.displayName || friendData?.email || friend.friendId;
-          const userEmail = friendData?.email || "";
+            fromUserData?.displayName ||
+            fromUserData?.email ||
+            req.fromUserId;
+          const userEmail = fromUserData?.email || "";
 
           li.innerHTML = `
             <div>
               <strong>${userName}</strong>
               <br><small class="text-muted">${userEmail}</small>
             </div>
-            <button class="btn btn-outline-danger btn-sm remove-btn" data-id="${friend.id}">Remove</button>
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-success btn-sm accept-btn" data-id="${req.id}">Accept</button>
+              <button class="btn btn-danger btn-sm reject-btn" data-id="${req.id}">Reject</button>
+            </div>
           `;
+          friendRequestsList.appendChild(li);
+        }
+
+        friendRequestsList.querySelectorAll(".accept-btn").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            acceptFriendRequest(btn.dataset.id)
+          );
+        });
+        friendRequestsList.querySelectorAll(".reject-btn").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            rejectFriendRequest(btn.dataset.id)
+          );
+        });
+      },
+      (error) => {
+        console.error("Error listening to friend requests:", error);
+      }
+    );
+
+    /* Accepted friends (no duplicates) */
+    const acceptedQuery = query(
+      collection(db, "friendships"),
+      or(
+        and(
+          where("fromUserId", "==", uid),
+          where("status", "==", "accepted")
+        ),
+        and(
+          where("toUserId", "==", uid),
+          where("status", "==", "accepted")
+        )
+      )
+    );
+
+    onSnapshot(
+      acceptedQuery,
+      async (snapshot) => {
+        const friendMap = new Map();
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const friendId =
+            data.fromUserId === uid ? data.toUserId : data.fromUserId;
+
+          if (!friendMap.has(friendId)) {
+            friendMap.set(friendId, {
+              friendId,
+              docIds: [docSnap.id],
+            });
+          } else {
+            friendMap.get(friendId).docIds.push(docSnap.id);
+          }
+        });
+
+        const friends = [];
+        for (const { friendId, docIds } of friendMap.values()) {
+          const friendData = await getUserData(friendId);
+          friends.push({
+            friendId,
+            docIds,
+            name:
+              friendData?.displayName ||
+              friendData?.email ||
+              (await labelForUser(friendId)),
+            email: friendData?.email || "",
+          });
+        }
+
+        friendCountBadge.textContent = friends.length.toString();
+        myFriendsList.innerHTML = "";
+
+        if (!friends.length) {
+          myFriendsList.innerHTML =
+            '<li class="list-group-item text-muted">No friends yet. Add some to get started!</li>';
+          return;
+        }
+
+        for (const friend of friends) {
+          const li = document.createElement("li");
+          li.className =
+            "list-group-item d-flex justify-content-between align-items-center";
+
+          li.innerHTML = `
+            <div>
+              <strong>${friend.name}</strong>
+              <br><small class="text-muted">${friend.email}</small>
+            </div>
+            <button class="btn btn-outline-danger btn-sm remove-btn" data-docids="${friend.docIds.join(
+            ","
+          )}">Remove</button>
+          `;
+
           myFriendsList.appendChild(li);
         }
 
         myFriendsList.querySelectorAll(".remove-btn").forEach((btn) => {
-          btn.addEventListener("click", () => removeFriend(btn.dataset.id));
+          btn.addEventListener("click", () =>
+            removeFriend(btn.dataset.docids.split(","))
+          );
         });
+      },
+      (error) => {
+        console.error("Error listening to accepted friendships:", error);
       }
-    };
-
-    // Listen to sent friends
-    onSnapshot(sentFriendsQuery, (snapshot) => {
-      sentFriends.clear();
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        sentFriends.set(data.toUserId, {
-          id: docSnap.id,
-          friendId: data.toUserId,
-          ...data,
-        });
-      });
-      renderFriendsList();
-    });
-
-    // Listen to received friends
-    onSnapshot(receivedFriendsQuery, (snapshot) => {
-      receivedFriends.clear();
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        receivedFriends.set(data.fromUserId, {
-          id: docSnap.id,
-          friendId: data.fromUserId,
-          ...data,
-        });
-      });
-      renderFriendsList();
-    });
+    );
   });
 
-  // add helper to get canonical pair key
-  function getPairKey(uid1, uid2) {
-    return [uid1, uid2].sort().join("__");
-  }
-
-  // Handle "Add Friend" form submission
+  /* Add Friend form */
   addFriendForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -240,23 +243,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // Find user by email
       const friendUserId = await getUserIdByEmail(friendEmail);
 
       if (!friendUserId) {
-        showMessage(
-          "User not found. Please check the email address.",
-          "danger"
-        );
+        showMessage("User not found. Please check the email address.", "danger");
         return;
       }
 
-      // Check if friendship already exists
-      const existingFriendship = await checkFriendshipExists(
+      const existing = await checkFriendshipExists(
         currentUser.uid,
         friendUserId
       );
-      if (existingFriendship) {
+      if (existing) {
         showMessage(
           "Friend request already sent or you are already friends.",
           "warning"
@@ -264,7 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Create friend request
       await addDoc(collection(db, "friendships"), {
         fromUserId: currentUser.uid,
         toUserId: friendUserId,
@@ -281,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Helper function to display messages
   function showMessage(message, type = "info") {
     addFriendMessage.innerHTML = `
       <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -289,20 +285,15 @@ document.addEventListener("DOMContentLoaded", () => {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `;
-
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
       addFriendMessage.innerHTML = "";
     }, 5000);
   }
 
-  // Helper function to get user data from Firestore
   async function getUserData(userId) {
     try {
       const userDoc = await getDoc(doc(db, "users", userId));
-      if (userDoc.exists()) {
-        return userDoc.data();
-      }
+      if (userDoc.exists()) return userDoc.data();
       return null;
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -310,145 +301,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Helper function to check if user exists
-  async function checkUserExists(userId) {
-    try {
-      const userDoc = await getDoc(doc(db, "users", userId));
-      return userDoc.exists();
-    } catch (error) {
-      console.error("Error checking user existence:", error);
-      return false;
-    }
-  }
-
-  // Helper function to find user UID by email
   async function getUserIdByEmail(email) {
     try {
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("email", "==", email));
-
-      return new Promise((resolve) => {
-        const unsubscribe = onSnapshot(
-          q,
-          (snapshot) => {
-            unsubscribe();
-            if (!snapshot.empty) {
-              const userDoc = snapshot.docs[0];
-              resolve(userDoc.id);
-            } else {
-              resolve(null);
-            }
-          },
-          (error) => {
-            console.error("Error finding user by email:", error);
-            resolve(null);
-          }
-        );
-      });
+      const snap = await getDocs(q);
+      if (!snap.empty) return snap.docs[0].id;
+      return null;
     } catch (error) {
       console.error("Error in getUserIdByEmail:", error);
       return null;
     }
   }
 
-  // Helper function to check if friendship already exists
+  // Very simple symmetric check (any status)
   async function checkFriendshipExists(userId1, userId2) {
     try {
       const friendshipsRef = collection(db, "friendships");
-
-      // Check both directions
       const q1 = query(
         friendshipsRef,
         where("fromUserId", "==", userId1),
         where("toUserId", "==", userId2)
       );
-
       const q2 = query(
         friendshipsRef,
         where("fromUserId", "==", userId2),
         where("toUserId", "==", userId1)
       );
-
-      const [snapshot1, snapshot2] = await Promise.all([
-        getDoc(doc(friendshipsRef, "temp")), // Dummy call to avoid empty promises
-        getDoc(doc(friendshipsRef, "temp")),
-      ]);
-
-      // Use onSnapshot to get real-time data (but we'll use it synchronously here)
-      return new Promise((resolve) => {
-        let found = false;
-        let checkedQueries = 0;
-
-        const checkComplete = () => {
-          checkedQueries++;
-          if (checkedQueries === 2) {
-            resolve(found);
-          }
-        };
-
-        const unsubscribe1 = onSnapshot(q1, (snapshot) => {
-          if (!snapshot.empty) {
-            found = true;
-          }
-          unsubscribe1();
-          checkComplete();
-        });
-
-        const unsubscribe2 = onSnapshot(q2, (snapshot) => {
-          if (!snapshot.empty) {
-            found = true;
-          }
-          unsubscribe2();
-          checkComplete();
-        });
-      });
+      const [s1, s2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      return !s1.empty || !s2.empty;
     } catch (error) {
       console.error("Error checking friendship:", error);
       return false;
     }
   }
 
-  // Accept friend request
   async function acceptFriendRequest(requestId) {
     try {
-      console.log("Accepting friend request:", requestId);
       await updateDoc(doc(db, "friendships", requestId), {
         status: "accepted",
         updatedAt: serverTimestamp(),
       });
-      console.log("Friend request accepted successfully");
     } catch (error) {
       console.error("Error accepting friend request:", error);
       alert("Failed to accept friend request. Please try again.");
     }
   }
 
-  // Reject friend request
   async function rejectFriendRequest(requestId) {
     const confirmed = confirm(
       "Are you sure you want to reject this friend request?"
     );
     if (!confirmed) return;
-
     try {
-      // You can either delete the request or update status to 'rejected'
-      // Here we'll delete it
       await deleteDoc(doc(db, "friendships", requestId));
-      console.log("Friend request rejected");
     } catch (error) {
       console.error("Error rejecting friend request:", error);
       alert("Failed to reject friend request. Please try again.");
     }
   }
 
-  // Remove friend
-  async function removeFriend(friendshipId) {
+  // Accepts one id or an array of ids
+  async function removeFriend(friendshipIds) {
     const confirmed = confirm("Are you sure you want to remove this friend?");
     if (!confirmed) return;
 
+    const ids = Array.isArray(friendshipIds) ? friendshipIds : [friendshipIds];
+
     try {
-      await deleteDoc(doc(db, "friendships", friendshipId));
-      console.log("Friend removed");
+      await Promise.all(ids.map((id) => deleteDoc(doc(db, "friendships", id))));
     } catch (error) {
       console.error("Error removing friend:", error);
       alert("Failed to remove friend. Please try again.");
