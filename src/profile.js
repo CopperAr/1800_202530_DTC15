@@ -40,7 +40,7 @@ function populateUserInfo() {
 
           const nameInput = document.getElementById("nameInput");
           const pronounInput = document.getElementById("pronounInput");
-          const cityInput = document.getElementById("cityInput");
+          const cityInput = document.getElementById("cityInput");2
 
           if (nameInput) nameInput.value = displayName || "";
           if (pronounInput) pronounInput.value = pronouns || "";
@@ -61,6 +61,7 @@ function populateUserInfo() {
 }
 
 populateUserInfo();
+
 
 if (editBtn) {
   editBtn.addEventListener("click", () => {
