@@ -13,20 +13,22 @@ class SiteNavbar extends HTMLElement {
   renderNavbar() {
     this.innerHTML = `
       <div class="top-nav">
-        <a class="nav-avatar" href="profile.html" aria-label="Profile">
-          <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-            <circle cx="12" cy="8" r="4" fill="currentColor"></circle>
-            <path
-              fill="currentColor"
-              d="M4 20c0-3.31 2.69-6 6-6h4c3.31 0 6 2.69 6 6v1H4z"
-            ></path>
-          </svg>
-        </a>
         <div class="nav-links">
-          <a href="index.html" data-nav-home>Home</a>
-          <a href="friends.html" data-nav-friends>Friends</a>
-          <a href="hangout.html" data-nav-hangouts>Hangouts</a>
-          <a href="schedule.html" data-nav-schedule>Schedule</a>
+        <a href="index.html" data-nav-home>Home</a>
+        <a href="friends.html" data-nav-friends>Friends</a>
+        <a href="hangout.html" data-nav-hangouts>Hangouts</a>
+        <a href="schedule.html" data-nav-schedule>Schedule</a>
+        <div>
+          <a class="nav-avatar" href="profile.html" aria-label="Profile">
+            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="8" r="4" fill="currentColor"></circle>
+              <path
+                fill="currentColor"
+                d="M4 20c0-3.31 2.69-6 6-6h4c3.31 0 6 2.69 6 6v1H4z"
+              ></path>
+            </svg>
+          </a>
+        </div>
         </div>
         <div id="authControls" class="nav-auth"></div>
       </div>
