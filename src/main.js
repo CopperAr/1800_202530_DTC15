@@ -1,8 +1,18 @@
 import { onAuthReady } from '/src/authentication.js';
 import { db } from '/src/firebaseConfig.js';
-import { doc, getDoc, onSnapshot, collection, query, where } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  or,
+  and
+} from 'firebase/firestore';
 
-// Read quote of the day from Firestore in real-time
+/* quote of the day*/
+
 function readQuote(day) {
   const quoteEl = document.getElementById('quote-goes-here');
   if (!quoteEl) return;
@@ -10,7 +20,6 @@ function readQuote(day) {
   function applyTextFromSnap(snap) {
     if (snap?.exists()) {
       const data = snap.data() || {};
-      // Accept either `quote` or `quotes` field
       const text = data.quote || data.quotes || '';
       quoteEl.textContent = text;
       return !!text;
@@ -24,7 +33,6 @@ function readQuote(day) {
     (snap) => {
       const ok = applyTextFromSnap(snap);
       if (!ok && day !== 'monday') {
-        // Fallback: listen to monday as default if today's doc missing
         const fallbackRef = doc(db, 'quotes', 'monday');
         onSnapshot(fallbackRef, (fsnap) => applyTextFromSnap(fsnap));
       }
@@ -35,7 +43,7 @@ function readQuote(day) {
   );
 }
 
-// Show greeting using Firestore user profile if available
+/* user greetings + friends*/
 function showDashboard() {
   const nameEl = document.getElementById('name-goes-here');
 
@@ -45,6 +53,7 @@ function showDashboard() {
       return;
     }
     let name = user.displayName || user.email || 'friend';
+
     try {
       const uref = doc(db, 'users', user.uid);
       const usnap = await getDoc(uref);
@@ -54,120 +63,107 @@ function showDashboard() {
     } catch (e) {
       console.warn('Failed to read user profile:', e);
     }
-    if (nameEl) nameEl.textContent = `${name}`;
 
-    // Load friends list
+    if (nameEl) nameEl.textContent = name;
+
     loadFriendsList(user.uid);
   });
 }
 
-// Load and display friends list
+/* friends list */
 async function loadFriendsList(uid) {
   const friendsList = document.getElementById('friendsList');
   if (!friendsList) return;
 
-  let sentFriends = new Map();
-  let receivedFriends = new Map();
-
-  const sentFriendsQuery = query(
+  // Query BOTH directions, no duplicates
+  const acceptedQuery = query(
     collection(db, 'friendships'),
-    where('fromUserId', '==', uid),
-    where('status', '==', 'accepted')
+    or(
+      and(where('fromUserId', '==', uid), where('status', '==', 'accepted')),
+      and(where('toUserId', '==', uid), where('status', '==', 'accepted'))
+    )
   );
 
-  const receivedFriendsQuery = query(
-    collection(db, 'friendships'),
-    where('toUserId', '==', uid),
-    where('status', '==', 'accepted')
-  );
+  onSnapshot(acceptedQuery, async (snapshot) => {
+    const friendMap = new Map();
 
-  const renderFriendsList = async () => {
-    const allFriends = new Map();
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
 
-    sentFriends.forEach((friend) => {
-      allFriends.set(friend.friendId, friend);
+      // determine friendId independent of direction
+      const friendId = data.fromUserId === uid ? data.toUserId : data.fromUserId;
+
+      if (!friendMap.has(friendId)) {
+        friendMap.set(friendId, {
+          friendId,
+          docIds: [docSnap.id],
+        });
+      } else {
+        friendMap.get(friendId).docIds.push(docSnap.id);
+      }
     });
-    receivedFriends.forEach((friend) => {
-      allFriends.set(friend.friendId, friend);
-    });
 
-    const friends = Array.from(allFriends.values());
+    // Convert deduped result to array
+    const friends = [];
 
+    for (const { friendId } of friendMap.values()) {
+      const friendData = await getUserData(friendId);
+
+      friends.push({
+        friendId,
+        name: friendData?.displayName || friendData?.email || 'User',
+      });
+    }
+
+    // Render
     friendsList.innerHTML = '';
 
     if (friends.length === 0) {
-      friendsList.innerHTML = '<li class="list-group-item">No friends yet. Add some to get started.</li>';
-    } else {
-      // Show max 5 friends
-      const displayFriends = friends.slice(0, 5);
-      
-      for (const friend of displayFriends) {
-        const friendData = await getUserData(friend.friendId);
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        
-        const userName = friendData?.displayName || friendData?.email || 'User';
-        
-        li.innerHTML = `
-          <span>${userName}</span>
-          <span class="badge bg-success rounded-pill">Friend</span>
-        `;
-        friendsList.appendChild(li);
-      }
-
-      // Add "View All" link if more than 5 friends
-      if (friends.length > 5) {
-        const viewAllLi = document.createElement('li');
-        viewAllLi.className = 'list-group-item text-center';
-        viewAllLi.innerHTML = `<a href="friends.html" class="text-decoration-none">View all friends (${friends.length})</a>`;
-        friendsList.appendChild(viewAllLi);
-      }
+      friendsList.innerHTML =
+        '<li class="list-group-item text-muted">No friends yet. Add some to get started.</li>';
+      return;
     }
-  };
 
-  async function getUserData(userId) {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        return userDoc.data();
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return null;
+    // Show max 5 friends
+    const displayFriends = friends.slice(0, 5);
+    for (const friend of displayFriends) {
+      const li = document.createElement('li');
+      li.className =
+        'list-group-item d-flex justify-content-between align-items-center';
+
+      li.innerHTML = `
+        <span>${friend.name}</span>
+        <span class="badge bg-success rounded-pill">Friend</span>
+      `;
+      friendsList.appendChild(li);
     }
-  }
 
-  onSnapshot(sentFriendsQuery, (snapshot) => {
-    sentFriends.clear();
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      sentFriends.set(data.toUserId, {
-        id: docSnap.id,
-        friendId: data.toUserId,
-        ...data,
-      });
-    });
-    renderFriendsList();
-  });
-
-  onSnapshot(receivedFriendsQuery, (snapshot) => {
-    receivedFriends.clear();
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      receivedFriends.set(data.fromUserId, {
-        id: docSnap.id,
-        friendId: data.fromUserId,
-        ...data,
-      });
-    });
-    renderFriendsList();
+    if (friends.length > 5) {
+      const viewAllLi = document.createElement('li');
+      viewAllLi.className = 'list-group-item text-center';
+      viewAllLi.innerHTML = `
+        <a href="friends.html" class="text-decoration-none">
+          View all friends (${friends.length})
+        </a>
+      `;
+      friendsList.appendChild(viewAllLi);
+    }
   });
 }
 
-// Call on load
-// Allow override via ?day=monday (for testing), else use today's weekday
-const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+async function getUserData(userId) {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) return userDoc.data();
+    return null;
+  } catch (e) {
+    console.error('Error fetching user data:', e);
+    return null;
+  }
+}
+
+const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
 try {
   const params = new URLSearchParams(location.search);
   const override = (params.get('day') || '').toLowerCase();
@@ -176,4 +172,5 @@ try {
 } catch {
   readQuote('tuesday');
 }
+
 showDashboard();
