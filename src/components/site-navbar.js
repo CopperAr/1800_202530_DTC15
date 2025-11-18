@@ -37,7 +37,7 @@ class SiteNavbar extends HTMLElement {
   }
   renderAuthControls() {
     const authControls = this.querySelector("#authControls");
-    if (!authControls) return; // Guard if container is missing
+    if (!authControls) return;
 
     authControls.innerHTML = "";
 
@@ -47,11 +47,18 @@ class SiteNavbar extends HTMLElement {
         authControls.innerHTML = "";
       } else {
         this.homeLink?.setAttribute("href", "index.html");
-        const loginControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
-        authControls.innerHTML = loginControl;
+
+        const currentPage = window.location.pathname.split("/").pop();
+        const shouldShowLoginBtn =
+          currentPage !== "index.html" && currentPage !== "login.html";
+
+        if (shouldShowLoginBtn) {
+          const loginControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
+          authControls.innerHTML = loginControl;
+        }
       }
     });
-}
+  }
 
   highlightActiveLink() {
     const currentPage = window.location.pathname.split("/").pop();
