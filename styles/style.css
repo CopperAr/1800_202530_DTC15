@@ -44,27 +44,36 @@ body {
   .top-nav .nav-links a {
     position: relative;
     padding: 0.5rem 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    display: none;
+  }
+
+  .nav-text {
+    display: inline;
   }
 
   .nav-avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.92);
-    transition: background 0.3s ease, transform 0.3s ease;
+    gap: 0.5rem;
   }
-  .nav-avatar:hover {
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateY(-1px);
-  }
-  .nav-avatar svg {
-    width: 28px;
-    height: 28px;
+
+  /* Desktop: Profile keeps text visible, hides icon */
+  @media (min-width: 763px) {
+    .nav-avatar .nav-icon {
+      display: none;
+    }
+    .nav-avatar .nav-text {
+      display: inline;
+    }
   }
 
   .mobile-avatar-btn {
@@ -180,36 +189,32 @@ body {
       padding: 0 0.15rem;
       min-width: 0;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       line-height: 1.2;
+      gap: 0.25rem;
     }
 
-    .top-nav .nav-links > div {
-      aspect-ratio: 1;
+    .top-nav .nav-icon {
+      display: block;
+      width: 22px;
+      height: 22px;
+    }
+
+    .top-nav .nav-text {
+      display: none;
     }
 
     .top-nav .nav-avatar {
-      width: 32px;
-      height: 32px;
-      min-width: 32px;
-      min-height: 32px;
-      max-width: 32px;
-      max-height: 32px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      background: rgba(255, 255, 255, 0.12);
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-shrink: 0;
+      border: none;
+      background: none;
+      border-radius: 0;
     }
 
-    .top-nav .nav-avatar svg {
-      width: 18px;
-      height: 18px;
-      display: block;
+    .top-nav .nav-avatar .nav-icon {
+      width: 22px;
+      height: 22px;
     }
 
     .hero-nav .container {
