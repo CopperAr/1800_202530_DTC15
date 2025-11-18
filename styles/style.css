@@ -158,9 +158,9 @@ body {
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35);
     }
 
-    .nav-avatar {
+    /* .nav-avatar {
       display: none;
-    }
+    } */
 
     .top-nav .nav-links {
       width: 100%;
@@ -172,7 +172,7 @@ body {
     }
 
     .top-nav .nav-links a {
-      flex: 1 1 25%;
+      flex-basis: 20%;
       text-align: center;
       font-size: 0.85rem;
       font-weight: 500;
