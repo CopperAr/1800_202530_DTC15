@@ -44,27 +44,36 @@ body {
   .top-nav .nav-links a {
     position: relative;
     padding: 0.5rem 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    display: none;
+  }
+
+  .nav-text {
+    display: inline;
   }
 
   .nav-avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.92);
-    transition: background 0.3s ease, transform 0.3s ease;
+    gap: 0.5rem;
   }
-  .nav-avatar:hover {
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateY(-1px);
-  }
-  .nav-avatar svg {
-    width: 28px;
-    height: 28px;
+
+  /* Desktop: Profile keeps text visible, hides icon */
+  @media (min-width: 763px) {
+    .nav-avatar .nav-icon {
+      display: none;
+    }
+    .nav-avatar .nav-text {
+      display: inline;
+    }
   }
 
   .mobile-avatar-btn {
@@ -133,7 +142,7 @@ body {
 
   @media (max-width: 762px) {
     body {
-      padding-bottom: 70px;
+      padding-bottom: 52px;
     }
 
     .hero-nav {
@@ -152,7 +161,7 @@ body {
       align-items: center;
       justify-content: center;
       gap: 0;
-      padding: 0.65rem 0.75rem;
+      padding: 0.4rem 0.5rem;
       background: rgba(17, 17, 17, 0.95);
       border-top: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35);
@@ -171,12 +180,41 @@ body {
       margin-left: 0;
     }
 
-    .top-nav .nav-links a {
-      flex-basis: 20%;
+    .top-nav .nav-links a,
+    .top-nav .nav-links > div {
+      flex: 1 1 0;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
-      padding: 0.35rem 0.25rem;
+      padding: 0 0.15rem;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      line-height: 1.2;
+      gap: 0.25rem;
+    }
+
+    .top-nav .nav-icon {
+      display: block;
+      width: 22px;
+      height: 22px;
+    }
+
+    .top-nav .nav-text {
+      display: none;
+    }
+
+    .top-nav .nav-avatar {
+      border: none;
+      background: none;
+      border-radius: 0;
+    }
+
+    .top-nav .nav-avatar .nav-icon {
+      width: 22px;
+      height: 22px;
     }
 
     .hero-nav .container {

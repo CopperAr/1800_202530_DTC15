@@ -26,21 +26,38 @@ function initAuthUI() {
     // --- Helper Functions ---
     // Toggle element visibility
     function setVisible(el, visible) {
-        el.classList.toggle('d-none', !visible);
+        el.classList.toggle('hidden', !visible);
     }
+
+    // Check URL hash and show appropriate view
+    function checkHashAndShowView() {
+        const hash = window.location.hash;
+        if (hash === '#signup') {
+            setVisible(loginView, false);
+            setVisible(signupView, true);
+            signupView?.querySelector('input')?.focus();
+        } else {
+            setVisible(signupView, false);
+            setVisible(loginView, true);
+            loginView?.querySelector('input')?.focus();
+        }
+    }
+
+    // Initialize view based on URL hash
+    checkHashAndShowView();
 
     // Show error message with accessibility and auto-hide
     let errorTimeout;
     function showError(msg) {
         alertEl.textContent = msg || '';
-        alertEl.classList.remove('d-none');
+        alertEl.classList.remove('hidden');
         clearTimeout(errorTimeout);
-        errorTimeout = setTimeout(hideError, 5000); // Auto-hide after 5s
+        errorTimeout = setTimeout(hideError, 5000);
     }
 
     // Hide error message
     function hideError() {
-        alertEl.classList.add('d-none');
+        alertEl.classList.add('hidden');
         alertEl.textContent = '';
         clearTimeout(errorTimeout);
     }
@@ -56,6 +73,7 @@ function initAuthUI() {
     toSignupBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         hideError();
+        window.location.hash = 'signup';
         setVisible(loginView, false);
         setVisible(signupView, true);
         signupView?.querySelector('input')?.focus();
@@ -64,9 +82,16 @@ function initAuthUI() {
     toLoginBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         hideError();
+        window.location.hash = '';
         setVisible(signupView, false);
         setVisible(loginView, true);
         loginView?.querySelector('input')?.focus();
+    });
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', () => {
+        hideError();
+        checkHashAndShowView();
     });
 
     // Login form submit

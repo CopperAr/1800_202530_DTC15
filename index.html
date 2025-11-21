@@ -3,17 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hang Out</title>
+    <title>Hang Out - Connect, Plan, Explore</title>
     <link rel="stylesheet" href="styles/style.css">
 
-    <!-- Bootstrap 5 CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-      
+      .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+          url('images/nav.jpg') center/cover no-repeat;
+        min-height: 75vh;
+      }
+      .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+      .brand-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fbbf24;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
     </style>
     
     <!-- Web Components for shared navbar and footer layout -->
@@ -21,46 +35,118 @@
     <script type="module" src="/src/components/site-footer.js"></script>
   </head>
 
-  <body>
+  <body class="bg-white">
     <!-- Hero Section -->
-    <section class="hero-nav">
-    <!-- nav bar -->
-     <site-navbar></site-navbar>
-      <div class="hero-content">
-        <h1 class="hero-title">Hang Out</h1>
-        <p class="hero-subtitle">
-          Discover new places, meet your friends, and create memories that last.
-          <br />
-          Hang Out makes it easier than ever to plan your next adventure.
-        </p>
-        <div class="mt-4">
-          <a class="btn btn-light btn-lg" href="login.html">Login / Sign Up</a>
+    <section class="hero-section relative">
+      <!-- Navbar -->
+      <site-navbar></site-navbar>
+      
+      <!-- Hero Content -->
+      <div class="container mx-auto px-6 py-24 md:py-32">
+        <div class="max-w-4xl mx-auto text-center text-white">
+          <div class="brand-logo mb-4">Hangout</div>
+          <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            Connect. Plan. <span class="text-yellow-300">Explore.</span>
+          </h1>
+          <p class="text-xl md:text-2xl mb-10 text-gray-100 max-w-2xl mx-auto leading-relaxed">
+            Discover amazing places, coordinate with friends, and create unforgettable memories together.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="login.html#signup" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-full font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105">
+              Sign Up Now
+            </a>
+            <a href="#features" class="text-white border-2 border-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+              Learn More
+            </a>
+          </div>
+          <p class="text-white mt-6 text-lg">
+            Already have an account? 
+            <a href="login.html" class="text-yellow-300 hover:text-yellow-200 font-semibold underline">Log in</a>
+          </p>
         </div>
       </div>
     </section>
 
-    <!-- Welcome Section -->
-    <section class="welcome-section">
-      <h1 class="display-4">Hang Out</h1>
-      <p class="lead">Get Out and Hang Out with your friends</p>
-      <hr class="my-4" />
-      <p>Add your friends and find an available time. It's that simple.</p>
-      <p class="lead">
-        <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
-      </p>
+    <!-- Features Section -->
+    <section id="features" class="bg-gray-50 py-20">
+      <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Everything You Need</h2>
+          <p class="text-xl text-gray-600 max-w-2xl mx-auto">Powerful features to help you connect with friends and plan the perfect hangout</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <!-- Feature 1: Friends -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Friends Network</h3>
+            <p class="text-gray-600 leading-relaxed">Add friends by email, send requests, and build your social circle. Stay connected with everyone you care about.</p>
+          </div>
+
+          <!-- Feature 2: Schedule -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Smart Scheduling</h3>
+            <p class="text-gray-600 leading-relaxed">Manage your calendar, create events, and find the perfect time when everyone is free to hang out.</p>
+          </div>
+
+          <!-- Feature 3: Discover -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Discover Places</h3>
+            <p class="text-gray-600 leading-relaxed">Explore curated hangout locations, trails, and activities perfect for your next adventure.</p>
+          </div>
+
+          <!-- Feature 4: Real-time -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Real-time Updates</h3>
+            <p class="text-gray-600 leading-relaxed">Get instant notifications for friend requests, event changes, and new hangout opportunities.</p>
+          </div>
+
+          <!-- Feature 5: Secure -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Secure & Private</h3>
+            <p class="text-gray-600 leading-relaxed">Your data is protected with Firebase security. Control who sees your schedule and personal information.</p>
+          </div>
+
+          <!-- Feature 6: Responsive -->
+          <div class="feature-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-6">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">Mobile Ready</h3>
+            <p class="text-gray-600 leading-relaxed">Plan on the go with our fully responsive design that works seamlessly on any device.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Footer -->
-    <footer class="site-footer">
-      <div class="container footer-grid">
-        <div>
-          <h3 class="footer-brand">Hang Out</h3>
-          <p>Get together with your friends</p>
-        </div>
-      </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <site-footer></site-footer>
   </body>
 </html>
