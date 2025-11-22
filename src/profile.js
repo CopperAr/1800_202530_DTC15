@@ -62,6 +62,7 @@ function populateUserInfo() {
 
 populateUserInfo();
 
+
 if (editBtn) {
   editBtn.addEventListener("click", () => {
     setVisible(profileView, false);
@@ -73,6 +74,7 @@ if (discardEditBtn) {
   discardEditBtn.addEventListener("click", () => {
     setVisible(editProfileView, false);
     setVisible(profileView, true);
+    populateUserInfo(); //Resets any unsaved changes in Edit Profile form
   });
 }
 
