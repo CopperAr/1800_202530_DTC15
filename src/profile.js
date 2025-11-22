@@ -40,7 +40,7 @@ function populateUserInfo() {
 
           const nameInput = document.getElementById("nameInput");
           const pronounInput = document.getElementById("pronounInput");
-          const cityInput = document.getElementById("cityInput");2
+          const cityInput = document.getElementById("cityInput");
 
           if (nameInput) nameInput.value = displayName || "";
           if (pronounInput) pronounInput.value = pronouns || "";
