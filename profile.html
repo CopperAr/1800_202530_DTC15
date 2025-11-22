@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hang Out - Profile</title>
     <link rel="stylesheet" href="styles/style.css" />
-
   </head>
   <body>
     <section class="hero-nav" style="height: auto; padding-bottom: 1rem">
@@ -19,7 +18,6 @@
     <main class="container my-4">
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
-          
           <!-- Profile View -->
           <div id="profileView" class="">
             <div class="card shadow-sm">
@@ -69,7 +67,7 @@
                 </p>
               </div>
             </div>
-
+            <!-- Profile: Account Section-->
             <div class="card shadow-sm mt-4">
               <div class="card-body">
                 <h5 class="card-title mb-3">Account</h5>
@@ -91,7 +89,7 @@
                 </div>
               </div>
             </div>
-
+            <!-- Profile: Support Section  -->
             <div class="card shadow-sm mt-4">
               <div class="card-body">
                 <h5 class="card-title mb-3">Support</h5>
@@ -102,9 +100,6 @@
                     id="contactBtn"
                   >
                     Contact
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary">
-                    FAQ
                   </button>
                 </div>
               </div>
@@ -239,14 +234,23 @@
     <dialog id="contact-dialog">
       <form method="dialog">
         <div class="text-center">
-        <h3>Need Help? Contact Us</h3>
-        <br>
-        <p><strong>Email</strong> <br> support@hangout.com</p>
-          <button id="closeContactDialog" type="reset" class="btn btn-outline-danger">Close</button>
+          <h3>Need Help? Contact Us</h3>
+          <br />
+          <p>
+            <strong>Email</strong> <br />
+            support@hangout.com
+          </p>
+          <button
+            id="closeContactDialog"
+            type="reset"
+            class="btn btn-outline-danger"
+          >
+            Close
+          </button>
         </div>
       </form>
     </dialog>
-    
+
     <!-- footer component -->
     <site-footer></site-footer>
 
