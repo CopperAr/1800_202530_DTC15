@@ -1,3 +1,15 @@
+/*******************************************************
+ *  Schedule Page Controller
+ *  -----------------------------------------------------
+ *  This file controls:
+ *   - Rendering FullCalendar
+ *   - Adding your own events
+ *   - Showing hangouts on the calendar
+ *   - Overlaying friends’ schedules
+ *   - Saving and remembering event colors
+ *   - Handling repeating events (weekly/monthly)
+ *******************************************************/
+
 import { onAuthReady } from "/src/authentication.js";
 import { db } from "/src/firebaseConfig.js";
 import {
@@ -16,17 +28,29 @@ import {
 } from "firebase/firestore";
 
 document.addEventListener("DOMContentLoaded", () => {
+    /*******************************************************
+     * DOM Element References
+     * Grab all required inputs and containers
+     *******************************************************/
     const calendarEl = document.getElementById("calendar");
     const form = document.getElementById("eventForm");
+
     const titleInput = document.getElementById("eventTitle");
     const dateInput = document.getElementById("eventDate");
     const startTimeInput = document.getElementById("eventStartTime");
     const endTimeInput = document.getElementById("eventEndTime");
+
     const repeatCountInput = document.getElementById("repeatCount");
     const repeatUnitSelect = document.getElementById("repeatUnit");
+
     const friendsScheduleList = document.getElementById("friendsScheduleList");
     const myEventColorInput = document.getElementById("myEventColor");
 
+
+
+    /*******************************************************
+     * Safety Check - If something is missing, exit
+     *******************************************************/
     if (
         !calendarEl ||
         !form ||
@@ -35,35 +59,62 @@ document.addEventListener("DOMContentLoaded", () => {
         !startTimeInput ||
         !endTimeInput
     ) {
-        console.warn("Schedule page DOM not ready");
+        console.warn("Schedule page DOM not fully loaded.");
         return;
     }
 
+
+
+    /*******************************************************
+     * Helper - Detect small mobile screens
+     * Used to simplify the FullCalendar toolbar
+     *******************************************************/
     function isMobile() {
         return window.matchMedia("(max-width: 576px)").matches;
     }
 
-    const defaultOwnColor = "#0d6efd";
-    const defaultFriendColor = "#6c757d";
 
-    let currentUserId = null;
-    let eventsCol = null;
+
+    /*******************************************************
+     * Basic State
+     *******************************************************/
+    const defaultOwnColor = "#1447E6";      // Default color for user is Blue
+    const defaultFriendColor = "#2AA63E";       // Default color for a friend is Green
+
+    let currentUserId = null;       // Set after auth
+    let eventsCol = null;       // "events" collection
+    let friendListeners = new Map();        // Active Firestore listeners
+    let friendLabelCache = new Map();       // Cache of names
+
+    // Loaded from Firestore "users" document
     let currentUserSettings = {
         eventColor: defaultOwnColor,
         friendColors: {},
     };
-    let friendListeners = new Map();
-    let friendLabelCache = new Map();
 
+
+
+    /*******************************************************
+     * Color Logic - Returns correct color depending on owner
+     *******************************************************/
     function getColorForOwner(ownerId) {
         if (!ownerId) return defaultOwnColor;
+
+        // your own events
         if (ownerId === currentUserId) {
             return currentUserSettings.eventColor || defaultOwnColor;
         }
+
+        // friends
         const map = currentUserSettings.friendColors || {};
         return map[ownerId] || defaultFriendColor;
     }
 
+
+
+    /*******************************************************
+     * FullCalendar Initialization
+     *******************************************************/
     const calendar = new window.FullCalendar.Calendar(calendarEl, {
         themeSystem: "bootstrap5",
         initialView: "dayGridMonth",
@@ -71,6 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
         expandRows: true,
         dayMaxEventRows: true,
         selectable: true,
+
+        // Responsive toolbar
         headerToolbar: isMobile()
             ? { left: "prev,next today", center: "title", right: "" }
             : {
@@ -78,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
             },
+
         buttonText: {
             today: "today",
             month: "month",
@@ -85,79 +139,97 @@ document.addEventListener("DOMContentLoaded", () => {
             day: "day",
         },
 
+
+        /***************************************************
+         * Date Click - Pre-fill the date for new event
+         ***************************************************/
         dateClick: (info) => {
             dateInput.value = info.dateStr;
             titleInput.focus();
         },
 
+        /***************************************************
+         * Event Click - Open or delete events
+         ***************************************************/
         eventClick: async (info) => {
             const event = info.event;
             const { ownerId, ownerName, seriesId, type, hangoutId } =
                 event.extendedProps || {};
 
-            // If this is a hangout event: open the Hangouts page instead of deleting
+
+            /***********************************************
+             * Hangout Events - Redirect instead of delete
+             ***********************************************/
             if (type === "hangout") {
                 const go = confirm(
-                    `Open this hangout on the Hangouts page?\n\n"${event.title}"`
+                    `Open this hangout?\n\n"${event.title}"`
                 );
                 if (go) {
-                    // you could add a query param like ?id=hangoutId later if needed
                     window.location.href = "hangout.html";
                 }
                 return;
             }
 
-            // Friends' schedule events are read-only
+            /***********************************************
+             * Friend Events - Read-only
+             ***********************************************/
             if (ownerId && ownerId !== currentUserId) {
                 alert(
-                    `This event belongs to ${ownerName || "a friend"} and can't be deleted from your calendar.`
+                    `This event belongs to ${ownerName || "a friend"}.\nYou cannot delete it.`
                 );
                 return;
             }
 
+            /***********************************************
+             * Your Own Events - Ask before deleting
+             ***********************************************/
             const startText = event.start
                 ? event.start.toLocaleString()
-                : "unknown start";
+                : "unknown";
             const endText = event.end ? event.end.toLocaleString() : "";
 
-            const deleteThis = confirm(
-                `Delete event "${event.title}"\n` +
-                `From: ${startText}` +
-                (endText ? `\nTo:   ${endText}` : "") +
-                " ?"
+            const del = confirm(
+                `Delete "${event.title}"?\nFrom: ${startText}` +
+                (endText ? `\nTo: ${endText}` : "")
             );
-            if (!deleteThis) return;
+            if (!del) return;
 
             try {
-                // Handle "delete whole series" if repeating
+                /*******************************************
+                 * Repeating Event - Delete entire series?
+                 *******************************************/
                 if (seriesId && eventsCol) {
                     const deleteSeries = confirm(
-                        "This event is part of a repeating series.\n\n" +
-                        "Click OK to delete ALL occurrences in the series.\n" +
-                        "Click Cancel to delete only this one."
+                        "This is part of a repeating series.\n\nOK = delete ALL events in series.\nCancel = delete only this one."
                     );
+
                     if (deleteSeries) {
-                        const seriesQuery = query(
+                        const q = query(
                             eventsCol,
                             where("userId", "==", currentUserId),
                             where("seriesId", "==", seriesId)
                         );
-                        const snap = await getDocs(seriesQuery);
+                        const snap = await getDocs(q);
                         await Promise.all(
-                            snap.docs.map((docSnap) => deleteDoc(docSnap.ref))
+                            snap.docs.map((d) => deleteDoc(d.ref))
                         );
                         return;
                     }
                 }
 
-                // Delete single occurrence
+                /*******************************************
+                 * Single Event Delete
+                 *******************************************/
                 await deleteDoc(doc(db, "events", event.id));
             } catch (err) {
-                console.error("Failed to delete event:", err);
-                alert("Could not delete event. Please try again.");
+                console.error("Delete failed:", err);
+                alert("Could not delete event.");
             }
         },
 
+        /***************************************************
+         * Responsive Toolbar Update
+         ***************************************************/
         windowResize: () => {
             calendar.setOption(
                 "headerToolbar",
@@ -174,20 +246,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     calendar.render();
 
-    // --- Recolor existing events when settings change ---
+
+
+    /*******************************************************
+     * Color Application - Re-apply colors to all events
+     *******************************************************/
     function applyColorsToEvents() {
         calendar.getEvents().forEach((ev) => {
-            const ownerId = ev.extendedProps && ev.extendedProps.ownerId;
+            const ownerId = ev.extendedProps?.ownerId;
             if (!ownerId) return;
+
             const color = getColorForOwner(ownerId);
-            if (color) {
-                ev.setProp("backgroundColor", color);
-                ev.setProp("borderColor", color);
-            }
+            ev.setProp("backgroundColor", color);
+            ev.setProp("borderColor", color);
         });
     }
 
-    // --- Helpers for repeating events ---
+
+
+    /*******************************************************
+     * Date Utilities - Used for repeating events
+     *******************************************************/
     function addDays(dateStr, days) {
         const d = new Date(dateStr + "T00:00");
         d.setDate(d.getDate() + days);
@@ -200,10 +279,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return d.toISOString().slice(0, 10);
     }
 
-    // --- Friend / label helpers ---
+
+
+    /*******************************************************
+     * User Label Lookup - Fetches display name once
+     *******************************************************/
     async function labelForUser(uid) {
         if (friendLabelCache.has(uid)) return friendLabelCache.get(uid);
-        let label = uid;
+
+        let label = uid;        // fallback
         try {
             const u = await getDoc(doc(db, "users", uid));
             if (u.exists()) {
@@ -211,81 +295,99 @@ document.addEventListener("DOMContentLoaded", () => {
                 label = d.displayName || d.name || d.email || uid;
             }
         } catch (err) {
-            console.error("Failed to get user label", err);
+            console.error("Error loading user label:", err);
         }
         friendLabelCache.set(uid, label);
         return label;
     }
 
+
+
+    /*******************************************************
+     * Friend Event Layers - Add/remove events on calendar
+     *******************************************************/
     function removeFriendEventsFromCalendar(friendId) {
         calendar.getEvents().forEach((ev) => {
-            if (ev.extendedProps && ev.extendedProps.ownerId === friendId && ev.extendedProps.isFriend) {
+            if (ev.extendedProps?.ownerId === friendId &&
+                ev.extendedProps?.isFriend) {
                 ev.remove();
             }
         });
     }
 
-    function subscribeFriendEvents(friendId, friendName) {
-        if (friendListeners.has(friendId)) return;
 
-        const q = query(collection(db, "events"), where("userId", "==", friendId));
+
+    /*******************************************************
+     * Subscribe to a friend's events in real-time
+     *******************************************************/
+    function subscribeFriendEvents(friendId, friendName) {
+        if (friendListeners.has(friendId)) return;      // already subscribed
+
+        const q = query(
+            collection(db, "events"),
+            where("userId", "==", friendId)
+        );
+
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                // Clear existing events for this friend
+                // Remove old friend events
                 removeFriendEventsFromCalendar(friendId);
 
+                // Add updated friend events
                 snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
+                    const ev = docSnap.data();
                     calendar.addEvent({
                         id: `friend_${friendId}_${docSnap.id}`,
-                        title: `${friendName}: ${data.title}`,
-                        start: data.start,
-                        end: data.end || null,
+                        title: `${friendName}: ${ev.title}`,
+                        start: ev.start,
+                        end: ev.end || null,
                         allDay: false,
                         color: getColorForOwner(friendId),
                         extendedProps: {
-                            ownerId: data.userId,
+                            ownerId: friendId,
                             ownerName: friendName,
                             isFriend: true,
-                            seriesId: data.seriesId || null,
+                            seriesId: ev.seriesId || null,
                         },
                     });
                 });
 
                 applyColorsToEvents();
             },
-            (error) => {
-                console.error("Error listening to friend's events:", error);
-            }
+            (err) => console.error("Friend events error:", err)
         );
 
         friendListeners.set(friendId, unsubscribe);
     }
 
+
+
+    /*******************************************************
+     * Stop listening to a friend's events
+     *******************************************************/
     function unsubscribeFriendEvents(friendId) {
         const unsub = friendListeners.get(friendId);
-        if (unsub) {
-            unsub();
-            friendListeners.delete(friendId);
-        }
+        if (unsub) unsub();
+        friendListeners.delete(friendId);
+
         removeFriendEventsFromCalendar(friendId);
     }
 
+
+
+    /*******************************************************
+     * Friend List UI - Creates toggle + color picker UI
+     *******************************************************/
     function setupFriendSchedule(uid) {
         if (!friendsScheduleList) return;
 
+        // Query all accepted friendships
         const friendshipsQuery = query(
             collection(db, "friendships"),
             or(
-                and(
-                    where("fromUserId", "==", uid),
-                    where("status", "==", "accepted")
-                ),
-                and(
-                    where("toUserId", "==", uid),
-                    where("status", "==", "accepted")
-                )
+                and(where("fromUserId", "==", uid), where("status", "==", "accepted")),
+                and(where("toUserId", "==", uid), where("status", "==", "accepted"))
             )
         );
 
@@ -293,119 +395,136 @@ document.addEventListener("DOMContentLoaded", () => {
             friendshipsQuery,
             async (snapshot) => {
                 friendsScheduleList.innerHTML = "";
-                const friendMap = new Map();
 
+                // Build a set of friend IDs
+                const friendIds = new Map();
                 snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const friendId =
-                        data.fromUserId === uid ? data.toUserId : data.fromUserId;
-                    friendMap.set(friendId, true);
+                    const d = docSnap.data();
+                    const friendId = d.fromUserId === uid ? d.toUserId : d.fromUserId;
+                    friendIds.set(friendId, true);
                 });
 
-                // Stop listening for friends that are no longer in the list
-                for (const friendId of Array.from(friendListeners.keys())) {
-                    if (!friendMap.has(friendId)) {
+                // Remove listeners for people not friends anymore
+                for (const friendId of friendListeners.keys()) {
+                    if (!friendIds.has(friendId)) {
                         unsubscribeFriendEvents(friendId);
                     }
                 }
 
-                if (!friendMap.size) {
+                // No friends?
+                if (!friendIds.size) {
                     friendsScheduleList.innerHTML =
-                        '<p class="text-muted small mb-0">No friends yet. Add some to see their availability.</p>';
+                        '<p class="text-muted small mb-0">You have no friends added yet.</p>';
                     return;
                 }
 
-                // Rebuild the UI
-                for (const friendId of friendMap.keys()) {
+                // Build UI for each friend
+                for (const friendId of friendIds.keys()) {
                     const friendName = await labelForUser(friendId);
-                    const friendColor =
-                        (currentUserSettings.friendColors || {})[friendId] ||
+
+                    const savedColor =
+                        currentUserSettings.friendColors?.[friendId] ||
                         defaultFriendColor;
 
-                    const item = document.createElement("label");
-                    item.className =
+                    const row = document.createElement("label");
+                    row.className =
                         "list-group-item d-flex justify-content-between align-items-center";
 
-                    item.innerHTML = `
+                    row.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div>
                                 <strong>${friendName}</strong>
                                 <br><small class="text-muted">${friendId}</small>
                             </div>
+
                             <div class="d-flex align-items-center gap-2">
+                                <!-- Friend color picker -->
                                 <input
-                                  type="color"
-                                  class="form-control form-control-color friend-color-picker"
-                                  data-friend-id="${friendId}"
-                                  value="${friendColor}"
-                                  title="Choose color for ${friendName}'s events"
+                                    type="color"
+                                    class="form-control form-control-color friend-color-picker"
+                                    data-friend-id="${friendId}"
+                                    value="${savedColor}"
                                 >
+
+                                <!-- Toggle switch -->
                                 <div class="form-check form-switch m-0">
-                                    <input class="form-check-input friend-toggle" type="checkbox" data-friend-id="${friendId}">
+                                    <input
+                                        class="form-check-input friend-toggle"
+                                        type="checkbox"
+                                        data-friend-id="${friendId}"
+                                    >
                                 </div>
                             </div>
                         </div>
                     `;
 
-                    friendsScheduleList.appendChild(item);
+                    friendsScheduleList.appendChild(row);
                 }
 
-                // Toggle listeners
-                friendsScheduleList
-                    .querySelectorAll(".friend-toggle")
-                    .forEach((input) => {
-                        const friendId = input.dataset.friendId;
-                        input.checked = friendListeners.has(friendId);
 
-                        input.addEventListener("change", async () => {
-                            const label = await labelForUser(friendId);
-                            if (input.checked) {
-                                subscribeFriendEvents(friendId, label);
-                            } else {
-                                unsubscribeFriendEvents(friendId);
-                            }
-                        });
+                /***************************************************
+                 * Setup - Friend toggles (On/Off)
+                 ***************************************************/
+                friendsScheduleList.querySelectorAll(".friend-toggle").forEach((input) => {
+                    const friendId = input.dataset.friendId;
+
+                    // Show toggle state depending on active listeners
+                    input.checked = friendListeners.has(friendId);
+
+                    input.addEventListener("change", async () => {
+                        const name = await labelForUser(friendId);
+                        if (input.checked) subscribeFriendEvents(friendId, name);
+                        else unsubscribeFriendEvents(friendId);
                     });
+                });
 
-                // Color pickers for each friend
-                friendsScheduleList
-                    .querySelectorAll(".friend-color-picker")
-                    .forEach((input) => {
-                        const friendId = input.dataset.friendId;
-                        input.addEventListener("input", async () => {
-                            const newColor = input.value;
-                            if (!currentUserSettings.friendColors) {
-                                currentUserSettings.friendColors = {};
-                            }
-                            currentUserSettings.friendColors[friendId] = newColor;
-                            applyColorsToEvents();
 
-                            try {
-                                await updateDoc(doc(db, "users", currentUserId), {
-                                    [`friendColors.${friendId}`]: newColor,
-                                });
-                            } catch (err) {
-                                console.error("Failed to save friend color", err);
-                            }
-                        });
+                /***************************************************
+                 * Setup - Friend color pickers
+                 ***************************************************/
+                friendsScheduleList.querySelectorAll(".friend-color-picker").forEach((input) => {
+                    const friendId = input.dataset.friendId;
+
+                    input.addEventListener("input", async () => {
+                        const newColor = input.value;
+
+                        // Update local settings
+                        currentUserSettings.friendColors ??= {};
+                        currentUserSettings.friendColors[friendId] = newColor;
+
+                        applyColorsToEvents();
+
+                        // Save to Firestore
+                        try {
+                            await updateDoc(doc(db, "users", currentUserId), {
+                                [`friendColors.${friendId}`]: newColor,
+                            });
+                        } catch (err) {
+                            console.error("Error saving friend color:", err);
+                        }
                     });
+                });
             },
-            (error) => {
-                console.error("Error listening to friendships:", error);
-            }
+            (err) => console.error("Friendships error:", err)
         );
     }
 
-    // --- Hangouts → Calendar helper ---
+
+
+    /*******************************************************
+     * Remove All Hangout Events From Calendar
+     *******************************************************/
     function removeHangoutEventsFromCalendar() {
         calendar.getEvents().forEach((ev) => {
-            if (ev.extendedProps && ev.extendedProps.type === "hangout") {
-                ev.remove();
-            }
+            if (ev.extendedProps?.type === "hangout") ev.remove();
         });
     }
 
-    // --- Auth + Firestore wiring ---
+
+
+    /*******************************************************
+     * Authentication
+     *******************************************************/
     onAuthReady((user) => {
         if (!user) {
             window.location.href = "login.html";
@@ -415,69 +534,58 @@ document.addEventListener("DOMContentLoaded", () => {
         currentUserId = user.uid;
         eventsCol = collection(db, "events");
 
-        // Listen for changes to *your* settings (eventColor + friendColors)
+
+        /***************************************************
+         * Listen To User Settings (eventColor + friendColors)
+         ***************************************************/
         const userDocRef = doc(db, "users", currentUserId);
+
         onSnapshot(
             userDocRef,
             (snap) => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    currentUserSettings.eventColor =
-                        data.eventColor ||
-                        currentUserSettings.eventColor ||
-                        defaultOwnColor;
-                    currentUserSettings.friendColors =
-                        data.friendColors ||
-                        currentUserSettings.friendColors ||
-                        {};
+                if (!snap.exists()) return;
 
-                    if (myEventColorInput) {
-                        myEventColorInput.value = currentUserSettings.eventColor;
-                    }
+                const data = snap.data();
 
-                    if (friendsScheduleList) {
-                        friendsScheduleList
-                            .querySelectorAll(".friend-color-picker")
-                            .forEach((input) => {
-                                const friendId = input.dataset.friendId;
-                                const map = currentUserSettings.friendColors || {};
-                                if (map[friendId]) {
-                                    input.value = map[friendId];
-                                }
-                            });
-                    }
+                currentUserSettings.eventColor =
+                    data.eventColor || defaultOwnColor;
 
-                    applyColorsToEvents();
+                currentUserSettings.friendColors =
+                    data.friendColors || {};
+
+                // Update the color input UI
+                if (myEventColorInput) {
+                    myEventColorInput.value = currentUserSettings.eventColor;
                 }
+
+                applyColorsToEvents();
             },
-            (error) => {
-                console.error("Error listening to user settings:", error);
-            }
+            (err) => console.error("Settings listener error:", err)
         );
 
-        // Listen for *your* own schedule events
-        const userEventsQuery = query(
-            eventsCol,
-            where("userId", "==", currentUserId)
-        );
+
+        /***************************************************
+         * Listen To Your Own Schedule Events
+         ***************************************************/
+        const userEventsQuery = query(eventsCol, where("userId", "==", currentUserId));
 
         onSnapshot(
             userEventsQuery,
             (snapshot) => {
-                // Remove your existing events from calendar
-                calendar.getEvents().forEach((e) => {
+                // Remove all your schedule events before adding updated ones
+                calendar.getEvents().forEach((ev) => {
                     if (
-                        e.extendedProps &&
-                        e.extendedProps.ownerId === currentUserId &&
-                        e.extendedProps.type !== "hangout"
+                        ev.extendedProps?.ownerId === currentUserId &&
+                        ev.extendedProps?.type !== "hangout"
                     ) {
-                        e.remove();
+                        ev.remove();
                     }
                 });
 
-                // Add them back with correct color
+                // Add new/updated events
                 snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
+
                     calendar.addEvent({
                         id: docSnap.id,
                         title: data.title,
@@ -497,44 +605,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 applyColorsToEvents();
             },
-            (error) => {
-                console.error("Error listening to events:", error);
-            }
+            (err) => console.error("Own events listener error:", err)
         );
 
-        // Listen for YOUR hangouts and show them on the calendar
-        const hangoutsCol = collection(db, "hangouts");
-        const myHangoutsQuery = query(
-            hangoutsCol,
+
+        /***************************************************
+         * Listen To Your Hangouts And Add Them To Calendar
+         ***************************************************/
+        const hangoutsQuery = query(
+            collection(db, "hangouts"),
             where("userId", "==", currentUserId)
         );
 
         onSnapshot(
-            myHangoutsQuery,
-            (snap) => {
-                // Remove old hangout events
+            hangoutsQuery,
+            (snapshot) => {
                 removeHangoutEventsFromCalendar();
 
-                snap.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const date = data.date; // stored as yyyy-mm-dd in hangout.js
-                    const startTime = data.startTime || "00:00";
-                    const endTime = data.endTime || null;
+                snapshot.forEach((docSnap) => {
+                    const d = docSnap.data();
+                    if (!d.date) return;
 
-                    if (!date) return;
-
-                    const startISO = `${date}T${startTime}`;
-                    const endISO = endTime ? `${date}T${endTime}` : null;
+                    const startISO = `${d.date}T${d.startTime || "00:00"}`;
+                    const endISO = d.endTime ? `${d.date}T${d.endTime}` : null;
 
                     calendar.addEvent({
                         id: `hangout_${docSnap.id}`,
-                        title: data.title || "Hangout",
+                        title: d.title || "Hangout",
                         start: startISO,
                         end: endISO,
                         allDay: false,
-                        color: getColorForOwner(data.userId),
+                        color: getColorForOwner(d.userId),
                         extendedProps: {
-                            ownerId: data.userId,
+                            ownerId: d.userId,
                             ownerName: "You",
                             type: "hangout",
                             hangoutId: docSnap.id,
@@ -544,52 +647,72 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 applyColorsToEvents();
             },
-            (error) => {
-                console.error("Error listening to hangouts:", error);
-            }
+            (err) => console.error("Hangouts listener error:", err)
         );
 
-        // Friend overlay setup
+
+        /***************************************************
+         * Friend Schedule Overlay
+         ***************************************************/
         setupFriendSchedule(currentUserId);
 
-        // Handle own event color picker
+
+        /***************************************************
+         * Own Event Color Picker - Save selection
+         ***************************************************/
         if (myEventColorInput) {
             myEventColorInput.addEventListener("input", async () => {
                 const newColor = myEventColorInput.value || defaultOwnColor;
+
                 currentUserSettings.eventColor = newColor;
                 applyColorsToEvents();
+
                 try {
                     await updateDoc(doc(db, "users", currentUserId), {
                         eventColor: newColor,
                     });
                 } catch (err) {
-                    console.error("Failed to save own event color", err);
+                    console.error("Failed to save own event color:", err);
                 }
             });
         }
 
-        // Add Event form submit (normal schedule events)
+
+        /***************************************************
+         * Event Creation Form - Create schedule events
+         ***************************************************/
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
+
             const title = titleInput.value.trim();
             const date = dateInput.value;
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
-            const repeatUnit = repeatUnitSelect?.value || "none";
-            const repeatCountRaw = repeatCountInput?.value || "1";
 
+            let repeatUnit = repeatUnitSelect?.value || "none";
+            let repeatCountRaw = repeatCountInput?.value || "1";
+
+
+            /***********************************************
+             * Basic Validation
+             ***********************************************/
             if (!title || !date || !startTime || !endTime) {
-                alert("Please enter a title, date, start time, and end time.");
+                alert("Please fill all required fields.");
                 return;
             }
 
             let repeatCount = parseInt(repeatCountRaw, 10);
-            if (Number.isNaN(repeatCount) || repeatCount < 1) repeatCount = 1;
+            if (isNaN(repeatCount) || repeatCount < 1) repeatCount = 1;
             if (repeatCount > 52) repeatCount = 52;
 
+
+            /***********************************************
+             * Repeating Event -> Assign seriesId
+             ***********************************************/
             const needsSeries = repeatUnit !== "none" && repeatCount > 1;
+
             const seriesId =
-                needsSeries && window.crypto && window.crypto.randomUUID
+                needsSeries && window.crypto?.randomUUID
                     ? window.crypto.randomUUID()
                     : needsSeries
                         ? `series_${currentUserId}_${Date.now()}`
@@ -597,10 +720,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const writes = [];
 
-            for (let i = 0; i < repeatCount; i += 1) {
+
+            /***********************************************
+             * Create Each Occurence
+             ***********************************************/
+            for (let i = 0; i < repeatCount; i++) {
                 let occurrenceDate = date;
+
                 if (repeatUnit === "week") {
-                    occurrenceDate = addDays(date, 7 * i);
+                    occurrenceDate = addDays(date, i * 7);
                 } else if (repeatUnit === "month") {
                     occurrenceDate = addMonths(date, i);
                 }
@@ -619,18 +747,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
             }
 
+
+            /***********************************************
+             * Save And Reset Form
+             ***********************************************/
             try {
                 await Promise.all(writes);
 
-                // reset form (keep date)
                 titleInput.value = "";
                 startTimeInput.value = "";
                 endTimeInput.value = "";
+
                 if (repeatCountInput) repeatCountInput.value = "1";
                 if (repeatUnitSelect) repeatUnitSelect.value = "none";
+
             } catch (err) {
                 console.error("Failed to add event(s):", err);
-                alert("Could not save event(s). Please try again.");
+                alert("Could not save events.");
             }
         });
     });
