@@ -1,15 +1,37 @@
+// -------------------------------------------------------------
+// src/components/site-navbar.js
+// -------------------------------------------------------------
+// Custom web component for the site navigation bar.
+// Provides a responsive navigation menu that adapts based on
+// user authentication state and highlights the active page.
+// -------------------------------------------------------------
+
 // Import specific functions from the Firebase Auth SDK
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "/src/firebaseConfig.js";
 
+// -------------------------------------------------------------
+// SiteNavbar Class
+// -------------------------------------------------------------
+// Defines a custom HTML element for the navigation bar.
+// Automatically renders navbar, handles auth state, and
+// highlights the current page.
+// -------------------------------------------------------------
 class SiteNavbar extends HTMLElement {
+  // Constructor runs when the element is created
   constructor() {
     super();
-    this.renderNavbar();
-    this.renderAuthControls();
-    this.highlightActiveLink();
+    this.renderNavbar();        // Build the navbar HTML
+    this.renderAuthControls();  // Add login/logout buttons
+    this.highlightActiveLink(); // Highlight current page
   }
 
+  // -------------------------------------------------------------
+  // renderNavbar()
+  // -------------------------------------------------------------
+  // Builds the navigation bar HTML structure with SVG icons
+  // and navigation links for all main pages.
+  // -------------------------------------------------------------
   renderNavbar() {
     this.innerHTML = `
       <div class="top-nav">
@@ -58,25 +80,43 @@ class SiteNavbar extends HTMLElement {
         <div id="authControls" class="nav-auth"></div>
       </div>
     `;
+    // Store reference to home link for later modification
     this.homeLink = this.querySelector("[data-nav-home]");
   }
+  
+  // -------------------------------------------------------------
+  // renderAuthControls()
+  // -------------------------------------------------------------
+  // Dynamically renders login/logout buttons based on auth state.
+  // - Logged in: No auth controls shown
+  // - Logged out: Shows "Log in" button (except on login pages)
+  // Also updates home link destination based on auth state.
+  // -------------------------------------------------------------
   renderAuthControls() {
     const authControls = this.querySelector("#authControls");
     if (!authControls) return;
 
     authControls.innerHTML = "";
 
+    // Listen for authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        // User is logged in
+        // Change home link to main dashboard
         this.homeLink?.setAttribute("href", "main.html");
+        // No auth controls needed when logged in
         authControls.innerHTML = "";
       } else {
+        // User is logged out
+        // Change home link to landing page
         this.homeLink?.setAttribute("href", "index.html");
 
+        // Determine current page to avoid showing login button on login pages
         const currentPage = window.location.pathname.split("/").pop();
         const shouldShowLoginBtn =
           currentPage !== "index.html" && currentPage !== "login.html";
 
+        // Show login button if not on login/index pages
         if (shouldShowLoginBtn) {
           const loginControl = `<a class="btn btn-outline-light" id="loginBtn" href="/login.html" style="min-width: 80px;">Log in</a>`;
           authControls.innerHTML = loginControl;
@@ -85,9 +125,18 @@ class SiteNavbar extends HTMLElement {
     });
   }
 
+  // -------------------------------------------------------------
+  // highlightActiveLink()
+  // -------------------------------------------------------------
+  // Adds 'active' class to the navigation link that matches
+  // the current page, providing visual feedback to users.
+  // -------------------------------------------------------------
   highlightActiveLink() {
+    // Get current page filename from URL
     const currentPage = window.location.pathname.split("/").pop();
     const links = this.querySelectorAll("a[href]");
+    
+    // Check each link and add 'active' class if it matches current page
     links.forEach((link) => {
       const href = link.getAttribute("href");
       if (href && currentPage === href) {
@@ -97,4 +146,5 @@ class SiteNavbar extends HTMLElement {
   }
 }
 
+// Register the custom element so it can be used in HTML as <site-navbar>
 customElements.define("site-navbar", SiteNavbar);
