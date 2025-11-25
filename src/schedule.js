@@ -1,4 +1,3 @@
-// src/schedule.js
 import { onAuthReady } from "/src/authentication.js";
 import { db } from "/src/firebaseConfig.js";
 import {
