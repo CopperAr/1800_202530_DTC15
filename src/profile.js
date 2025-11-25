@@ -5,18 +5,30 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 const auth = getAuth();
 
+//declare constants for profileView
 const profileView = document.getElementById("profileView");
-const editProfileView = document.getElementById("editProfileView");
 const editBtn = document.getElementById("editBtn");
+const signOutBtn = document.getElementById("signOutBtn");
+const contactBtn = document.getElementById("contactBtn");
+
+//declare constants for editProfileView
+const editProfileView = document.getElementById("editProfileView");
 const discardEditBtn = document.getElementById("discardEditBtn");
 const saveButton = document.getElementById("saveButton");
 
+// Declare constants for Contact dialog window
+const contactDialog = document.getElementById("contact-dialog");
+const closeContactDialog = document.getElementById("closeContactDialog")
+
+
+//toggles the display of html section between visibile and none
 function setVisible(el, visible) {
   if (el) {
-    el.classList.toggle('d-none', !visible);
+    el.classList.toggle("d-none", !visible);
   }
 }
 
+// Get user name, pronouns, city, and email from firestore
 function populateUserInfo() {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -31,9 +43,15 @@ function populateUserInfo() {
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          const { displayName = "", email = "", pronouns = "", city = "" } = userData;
+          const {
+            displayName = "",
+            email = "",
+            pronouns = "",
+            city = "",
+          } = userData;
 
-          if (nameEl) nameEl.textContent = displayName || user.displayName || "User";
+          if (nameEl)
+            nameEl.textContent = displayName || user.displayName || "User";
           if (pronounsEl) pronounsEl.textContent = pronouns;
           if (cityEl) cityEl.textContent = city;
           if (emailEl) emailEl.value = email || user.email;
@@ -45,9 +63,9 @@ function populateUserInfo() {
           if (nameInput) nameInput.value = displayName || "";
           if (pronounInput) pronounInput.value = pronouns || "";
           if (cityInput) cityInput.value = city || "";
-
         } else {
-          if (nameEl) nameEl.textContent = user.displayName || user.email || "User";
+          if (nameEl)
+            nameEl.textContent = user.displayName || user.email || "User";
           if (emailEl) emailEl.value = user.email || "";
         }
       } catch (error) {
@@ -60,8 +78,10 @@ function populateUserInfo() {
   });
 }
 
+//populates info when page first loads
 populateUserInfo();
 
+// profileView -> editProfileView
 if (editBtn) {
   editBtn.addEventListener("click", () => {
     setVisible(profileView, false);
@@ -69,13 +89,17 @@ if (editBtn) {
   });
 }
 
+// editProfileView -> profileView
 if (discardEditBtn) {
   discardEditBtn.addEventListener("click", () => {
     setVisible(editProfileView, false);
     setVisible(profileView, true);
+    populateUserInfo(); //Resets any unsaved changes in Edit Profile form
   });
 }
 
+/* Saves any changes to user Info, then
+ editProfileView -> profileView */
 if (saveButton) {
   saveButton.addEventListener("click", async () => {
     const user = auth.currentUser;
@@ -83,20 +107,22 @@ if (saveButton) {
       alert("No user is signed in. Please log in first.");
       return;
     }
-
+    // get new values from html form
     const newName = document.getElementById("nameInput").value;
     const newPronouns = document.getElementById("pronounInput").value;
     const newCity = document.getElementById("cityInput").value;
 
     try {
+      // update firestore with new values
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { 
-        displayName: newName, 
-        pronouns: newPronouns, 
-        city: newCity 
+      await updateDoc(userRef, {
+        displayName: newName,
+        pronouns: newPronouns,
+        city: newCity,
       });
       console.log("User document successfully updated!");
-      
+
+      // After saving edits, display profile page and load updated info from firestore
       setVisible(editProfileView, false);
       setVisible(profileView, true);
       populateUserInfo();
@@ -107,6 +133,7 @@ if (saveButton) {
   });
 }
 
+// Copy e-mail address to clipboard
 const copyButton = document.getElementById("copyButton");
 if (copyButton) {
   copyButton.addEventListener("click", function () {
@@ -137,7 +164,7 @@ if (copyButton) {
   });
 }
 
-const signOutBtn = document.getElementById("signOutBtn");
+// Log out user, which will redirect to index.html
 if (signOutBtn) {
   signOutBtn.addEventListener("click", async () => {
     try {
@@ -148,3 +175,15 @@ if (signOutBtn) {
     }
   });
 }
+
+
+// Open contact dialog window from profileView
+contactBtn.addEventListener("click", () => {
+  contactDialog.showModal();
+});
+
+
+// Close contact dialog window from profileView
+closeContactDialog.addEventListener("click", () => {
+  contactDialog.close();
+});
