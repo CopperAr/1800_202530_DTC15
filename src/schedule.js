@@ -1,3 +1,4 @@
+// src/schedule.js
 import { onAuthReady } from "/src/authentication.js";
 import { db } from "/src/firebaseConfig.js";
 import {
@@ -92,9 +93,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         eventClick: async (info) => {
             const event = info.event;
-            const { ownerId, ownerName, seriesId } = event.extendedProps || {};
+            const { ownerId, ownerName, seriesId, type, hangoutId } =
+                event.extendedProps || {};
 
-            // Friends' events are read-only
+            // If this is a hangout event: open the Hangouts page instead of deleting
+            if (type === "hangout") {
+                const go = confirm(
+                    `Open this hangout on the Hangouts page?\n\n"${event.title}"`
+                );
+                if (go) {
+                    // you could add a query param like ?id=hangoutId later if needed
+                    window.location.href = "hangout.html";
+                }
+                return;
+            }
+
+            // Friends' schedule events are read-only
             if (ownerId && ownerId !== currentUserId) {
                 alert(
                     `This event belongs to ${ownerName || "a friend"} and can't be deleted from your calendar.`
@@ -187,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return d.toISOString().slice(0, 10);
     }
 
-    // --- Friend label / schedule helpers ---
+    // --- Friend / label helpers ---
     async function labelForUser(uid) {
         if (friendLabelCache.has(uid)) return friendLabelCache.get(uid);
         let label = uid;
@@ -206,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function removeFriendEventsFromCalendar(friendId) {
         calendar.getEvents().forEach((ev) => {
-            if (ev.extendedProps && ev.extendedProps.ownerId === friendId) {
+            if (ev.extendedProps && ev.extendedProps.ownerId === friendId && ev.extendedProps.isFriend) {
                 ev.remove();
             }
         });
@@ -320,10 +334,16 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <br><small class="text-muted">${friendId}</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <input type="color" class="form-control form-control-color friend-color-picker" data-friend-id="${friendId}" value="${friendColor}" title="Choose color for ${friendName}'s events">
-                                    <div class="form-check form-switch m-0">
-                                        <input class="form-check-input friend-toggle" type="checkbox" data-friend-id="${friendId}">
-                                    </div>
+                                <input
+                                  type="color"
+                                  class="form-control form-control-color friend-color-picker"
+                                  data-friend-id="${friendId}"
+                                  value="${friendColor}"
+                                  title="Choose color for ${friendName}'s events"
+                                >
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input friend-toggle" type="checkbox" data-friend-id="${friendId}">
+                                </div>
                             </div>
                         </div>
                     `;
@@ -377,6 +397,15 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
+    // --- Hangouts → Calendar helper ---
+    function removeHangoutEventsFromCalendar() {
+        calendar.getEvents().forEach((ev) => {
+            if (ev.extendedProps && ev.extendedProps.type === "hangout") {
+                ev.remove();
+            }
+        });
+    }
+
     // --- Auth + Firestore wiring ---
     onAuthReady((user) => {
         if (!user) {
@@ -395,9 +424,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (snap.exists()) {
                     const data = snap.data();
                     currentUserSettings.eventColor =
-                        data.eventColor || currentUserSettings.eventColor || defaultOwnColor;
+                        data.eventColor ||
+                        currentUserSettings.eventColor ||
+                        defaultOwnColor;
                     currentUserSettings.friendColors =
-                        data.friendColors || currentUserSettings.friendColors || {};
+                        data.friendColors ||
+                        currentUserSettings.friendColors ||
+                        {};
 
                     if (myEventColorInput) {
                         myEventColorInput.value = currentUserSettings.eventColor;
@@ -423,7 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         );
 
-        // Listen for *your* own events
+        // Listen for *your* own schedule events
         const userEventsQuery = query(
             eventsCol,
             where("userId", "==", currentUserId)
@@ -434,7 +467,11 @@ document.addEventListener("DOMContentLoaded", () => {
             (snapshot) => {
                 // Remove your existing events from calendar
                 calendar.getEvents().forEach((e) => {
-                    if (e.extendedProps && e.extendedProps.ownerId === currentUserId) {
+                    if (
+                        e.extendedProps &&
+                        e.extendedProps.ownerId === currentUserId &&
+                        e.extendedProps.type !== "hangout"
+                    ) {
                         e.remove();
                     }
                 });
@@ -454,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             ownerName: "You",
                             isFriend: false,
                             seriesId: data.seriesId || null,
+                            type: "schedule",
                         },
                     });
                 });
@@ -462,6 +500,53 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             (error) => {
                 console.error("Error listening to events:", error);
+            }
+        );
+
+        // Listen for YOUR hangouts and show them on the calendar
+        const hangoutsCol = collection(db, "hangouts");
+        const myHangoutsQuery = query(
+            hangoutsCol,
+            where("userId", "==", currentUserId)
+        );
+
+        onSnapshot(
+            myHangoutsQuery,
+            (snap) => {
+                // Remove old hangout events
+                removeHangoutEventsFromCalendar();
+
+                snap.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const date = data.date; // stored as yyyy-mm-dd in hangout.js
+                    const startTime = data.startTime || "00:00";
+                    const endTime = data.endTime || null;
+
+                    if (!date) return;
+
+                    const startISO = `${date}T${startTime}`;
+                    const endISO = endTime ? `${date}T${endTime}` : null;
+
+                    calendar.addEvent({
+                        id: `hangout_${docSnap.id}`,
+                        title: data.title || "Hangout",
+                        start: startISO,
+                        end: endISO,
+                        allDay: false,
+                        color: getColorForOwner(data.userId),
+                        extendedProps: {
+                            ownerId: data.userId,
+                            ownerName: "You",
+                            type: "hangout",
+                            hangoutId: docSnap.id,
+                        },
+                    });
+                });
+
+                applyColorsToEvents();
+            },
+            (error) => {
+                console.error("Error listening to hangouts:", error);
             }
         );
 
@@ -484,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Add Event form submit
+        // Add Event form submit (normal schedule events)
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const title = titleInput.value.trim();
