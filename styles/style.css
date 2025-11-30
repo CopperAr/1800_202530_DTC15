@@ -203,7 +203,7 @@ body {
     }
 
     .top-nav .nav-text {
-      display: none;
+      display: inline;
     }
 
     .top-nav .nav-avatar {
