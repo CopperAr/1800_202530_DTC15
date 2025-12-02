@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hangout - Login & Sign Up</title>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      .auth-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+          url('/assets/nav-BE60Ki0T.jpg') center/cover no-repeat;
+        min-height: 100vh;
+        position: relative;
+      }
+      .brand-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fbbf24;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      .auth-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+      }
+      .input-field {
+        transition: all 0.3s ease;
+      }
+      .input-field:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+      
+      /* Desktop: nav in top-right corner */
+      @media (min-width: 763px) {
+        .auth-hero .top-nav {
+          position: absolute;
+          top: 0;
+          right: 0;
+          left: auto;
+          bottom: auto;
+          padding: 1.5rem 2rem;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+        }
+        
+        .auth-hero .top-nav .nav-links {
+          gap: 2rem;
+        }
+        
+        body {
+          padding-bottom: 0;
+        }
+      }
+      
+      /* Mobile: nav at bottom (uses existing styles from style.css) */
+      @media (max-width: 762px) {
+        .auth-hero {
+          padding-bottom: 80px;
+        }
+      }
+    </style>
+
+    <!-- Web Components for shared navbar and footer layout -->
+    <script type="module" crossorigin src="/assets/login-CYOVWhyv.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/site-footer-DBBnyLh7.js">
+    <link rel="modulepreload" crossorigin href="/assets/app-BVaraGeR.js">
+    <link rel="modulepreload" crossorigin href="/assets/authentication-DYev4ouI.js">
+    <link rel="stylesheet" crossorigin href="/assets/site-footer-BEVgrkHf.css">
+    <link rel="stylesheet" crossorigin href="/assets/app-C11chwFa.css">
+  </head>
+
+  <body class="bg-gray-50">
+    <!-- Hero Section with Form -->
+    <section class="auth-hero relative flex items-center justify-center px-4 py-12">
+      <!-- Navbar -->
+      <site-navbar></site-navbar>
+      
+      <!-- Auth Container -->
+      <div class="w-full max-w-md mx-auto">
+        <!-- Brand Logo -->
+        <div class="text-center mb-8">
+          <div class="brand-logo text-3xl mb-2">Hangout</div>
+          <p class="text-white text-lg">Connect with friends, plan adventures</p>
+        </div>
+
+        <!-- Alert -->
+        <div id="authAlert" class="hidden mb-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg" role="alert"></div>
+
+        <!-- Login View -->
+        <div id="loginView" class="auth-card rounded-2xl shadow-2xl p-8">
+          <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">Welcome Back</h2>
+          <p class="text-gray-600 text-center mb-6">Log in to continue your adventure</p>
+          
+          <form id="loginForm" novalidate class="space-y-4">
+            <div>
+              <label for="loginEmail" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+              <input
+                type="email"
+                id="loginEmail"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+            <div>
+              <label for="loginPassword" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+              Log In
+            </button>
+          </form>
+          
+          <div class="mt-6 text-center">
+            <p class="text-gray-600">
+              Don't have an account?
+              <a href="#signup" id="toSignup" class="text-purple-600 hover:text-purple-700 font-semibold hover:underline">Sign up</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- Signup View -->
+        <div id="signupView" class="auth-card rounded-2xl shadow-2xl p-8 hidden">
+          <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">Create Account</h2>
+          <p class="text-gray-600 text-center mb-6">Join us and start planning hangouts</p>
+          
+          <form id="signupForm" novalidate class="space-y-4">
+            <div>
+              <label for="signupName" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                id="signupName"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="John Doe"
+                aria-label="Full name"
+                required
+              />
+            </div>
+            <div>
+              <label for="signupEmail" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+              <input
+                type="email"
+                id="signupEmail"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+            <div>
+              <label for="signupPassword" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                id="signupPassword"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Create a strong password"
+                required
+              />
+            </div>
+            <div>
+              <label for="signupPasswordConfirm" class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+              <input
+                type="password"
+                id="signupPasswordConfirm"
+                class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 font-semibold py-3 rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+              Create Account
+            </button>
+          </form>
+          
+          <div class="mt-6 text-center">
+            <p class="text-gray-600">
+              Already have an account?
+              <a href="#" id="toLogin" class="text-purple-600 hover:text-purple-700 font-semibold hover:underline">Log in</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6">
+          <a href="index.html" class="text-white hover:text-yellow-300 font-semibold transition-colors duration-300">
+            ← Back to Home
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scripts -->
+
+    <!-- Fallback toggling (ensures UI switches even if modules fail to load) -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const loginView = document.getElementById('loginView');
+        const signupView = document.getElementById('signupView');
+        const toSignup = document.getElementById('toSignup');
+        const toLogin = document.getElementById('toLogin');
+        function show(view) {
+          if (loginView) loginView.classList.toggle('hidden', view !== 'login');
+          if (signupView) signupView.classList.toggle('hidden', view !== 'signup');
+        }
+        toSignup && toSignup.addEventListener('click', function (e) { e.preventDefault(); show('signup'); });
+        toLogin && toLogin.addEventListener('click', function (e) { e.preventDefault(); show('login'); });
+      });
+    </script>
+  </body>
+</html>

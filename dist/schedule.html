@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <!-- Makes the layout responsive on mobile, tablets, etc. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Page title shown in browser tab -->
+    <title>Hang Out | Schedule</title>
+
+    <!-- Main site-wide stylesheet -->
+
+    <!-- FullCalendar CSS (for calendar styling) -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css" rel="stylesheet" />
+
+    <!-- Bootstrap CSS framework (layout, cards, forms, etc.) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script type="module" crossorigin src="/assets/saved-D8RedpW4.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/site-footer-DBBnyLh7.js">
+  <link rel="modulepreload" crossorigin href="/assets/authentication-DYev4ouI.js">
+  <link rel="stylesheet" crossorigin href="/assets/site-footer-BEVgrkHf.css">
+</head>
+
+<body>
+    <!-- HERO / HEADER SECTION -->
+    <!-- Includes navbar + page heading -->
+    <section class="hero-nav" style="height: auto; padding-bottom: 1rem;">
+        <!-- Custom Web Component: main site navbar -->
+        <site-navbar></site-navbar>
+
+        <!-- Page title and short description -->
+        <div class="container py-3 text-center">
+            <h1 class="display-5">Schedule</h1>
+            <p class="lead">View and manage your upcoming hangouts.</p>
+        </div>
+    </section>
+
+
+
+    <!-- MAIN CONTENT -->
+    <!-- Two columns: calendar + event controls -->
+    <main class="container my-4">
+        <div class="row g-4">
+            <!-- LEFT COLUMN - Calendar -->
+            <!-- Shows events visually -->
+            <section class="col-12 col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title mb-3">Your Calendar</h3>
+
+                        <!-- FullCalendar will be rendered inside this div by JS -->
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- RIGHT COLUMN
+                - Add Event form
+                - Friends' schedules -->
+            <section class="col-12 col-lg-4">
+
+                <!-- Add Event card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Add Event</h4>
+
+                        <!-- Form used to create new events in the calendar -->
+                        <!-- schedule.js will listen for the submit event -->
+                        <form id="eventForm">
+                            <!-- Event title -->
+                            <div class="mb-3">
+                                <label for="eventTitle" class="form-label">Title</label>
+                                <input type="text" id="eventTitle" class="form-control" required />
+                            </div>
+
+                            <!-- Event date -->
+                            <div class="mb-3">
+                                <label for="eventDate" class="form-label">Date</label>
+                                <input type="date" id="eventDate" class="form-control" required autocomplete="off" />
+                            </div>
+
+                            <!-- Event start time -->
+                            <div class="mb-3">
+                                <label for="eventStartTime" class="form-label">Start time</label>
+                                <input type="time" id="eventStartTime" class="form-control" required
+                                    autocomplete="off" />
+                            </div>
+
+                            <!-- Event end time -->
+                            <div class="mb-3">
+                                <label for="eventEndTime" class="form-label">End time</label>
+                                <input type="time" id="eventEndTime" class="form-control" required autocomplete="off" />
+                            </div>
+
+                            <!-- Repeat options (e.g., weekly for N times) -->
+                            <div class="mb-3">
+                                <label class="form-label" for="repeatCount">Repeat</label>
+
+                                <div class="input-group">
+                                    <!-- How many times to repeat -->
+                                    <input type="number" id="repeatCount" class="form-control" min="1" max="52"
+                                        value="1" />
+
+                                    <!-- Repeat frequency -->
+                                    <select id="repeatUnit" class="form-select">
+                                        <option value="none">Do not repeat</option>
+                                        <option value="week">Weekly</option>
+                                        <option value="month">Monthly</option>
+                                    </select>
+                                </div>
+
+                                <small class="text-muted">
+                                    Example: 4 x weekly will add this event for 4 weeks in a row.
+                                </small>
+                            </div>
+
+                            <!-- Submit button: triggers event creation -->
+                            <button type="submit" class="btn btn-primary w-100">
+                                Add Event
+                            </button>
+                        </form>
+
+                        <!-- Small UX tip under the form -->
+                        <p class="text-muted mt-3 small mb-0">
+                            Tip: click one of <strong>your</strong> events in the calendar to remove it.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Friends' schedules card -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Friends' schedules</h4>
+
+                        <!-- Color picker for the user's own events -->
+                        <div class="mb-3">
+                            <label for="myEventColor" class="form-label">Your events color</label>
+                            <input type="color" id="myEventColor" class="form-control form-control-color"
+                                value="#0d6efd" title="Choose the default color for your events" />
+                        </div>
+
+                        <p class="text-muted small mb-2">
+                            Turn friends on to overlay their events on your calendar. You can also set a
+                            custom color for each friend. Friends' events are read-only.
+                        </p>
+
+                        <!-- List of friends and their schedule toggles -->
+                        <!-- schedule.js will populate this with controls (toggles, colors, ...) -->
+                        <div id="friendsScheduleList" class="list-group small"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+
+
+    <!-- Footer Web Component -->
+    <site-footer></site-footer>
+
+
+
+    <!-- JavaScript Includes -->
+
+    <!-- Bootstrap JS bundle (includes Popper, needed for dropdowns, modals, ...) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- FullCalendar main JS (global build, attaches FullCalendar to window) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    <!-- Custom Web Components: navbar + footer -->
+
+    <!-- Page-specific JS:
+        - initializes FullCalendar inside #calendar
+        - handles Add Event form
+        - loads friends' schedules
+    -->
+</body>
+
+</html>
