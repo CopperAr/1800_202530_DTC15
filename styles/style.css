@@ -76,15 +76,11 @@ body {
     }
   }
 
-  .mobile-avatar-btn {
-    display: none;
-    text-decoration: none;
-    color: inherit;
-  }
 
   .nav-auth {
     display: none;
   }
+
   .btn-login {
     background-color: #fff;
     color: #000;
@@ -229,25 +225,6 @@ body {
       font-size: 1rem;
     }
 
-    .mobile-avatar-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      background: rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.92);
-      margin-right: 0.5rem;
-      flex: 0 0 auto;
-      padding: 0;
-    }
-
-    .mobile-avatar-btn svg {
-      width: 24px;
-      height: 24px;
-    }
 
     .welcome-section {
       padding: 3rem 1.5rem;
