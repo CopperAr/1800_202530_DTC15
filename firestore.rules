@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwnerOf(doc) {
+      return isSignedIn() && doc.data.userId == request.auth.uid;
+    }
+
+    function isOwnerOfRequest() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+
+    // ---------- users ----------
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+
+    // ---------- friendships ----------
+    match /friendships/{friendshipId} {
+      allow read: if isSignedIn()
+        && (resource.data.fromUserId == request.auth.uid
+            || resource.data.toUserId == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow update, delete: if isSignedIn()
+        && (resource.data.fromUserId == request.auth.uid
+            || resource.data.toUserId == request.auth.uid);
+    }
+
+
+    // ---------- events (calendar) ----------
+    match /events/{eventId} {
+
+      // Anyone logged in may READ events → needed for friend schedule
+      allow read: if isSignedIn();
+
+      // Only the owner may create
+      allow create: if isOwnerOfRequest();
+
+      // Only the owner may update/delete
+      allow update, delete: if isOwnerOf(resource);
+    }
+
+
+    // ---------- quotes ----------
+    match /quotes/{quoteId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+
+    // ---------- hangouts ----------
+    match /hangouts/{hangoutId} {
+      allow create: if isOwnerOfRequest();
+      allow read, update, delete: if isOwnerOf(resource);
+    }
+  }
+}
