@@ -120,21 +120,7 @@ body {
     color: #555;
   }
 
-  /* Footer */
-  .site-footer {
-    background-color: #111;
-    color: #ccc;
-    padding: 2rem 0;
-    text-align: center;
-  }
-  .site-footer h3 {
-    color: #fff;
-    font-weight: 600;
-  }
-  .site-footer p {
-    color: #bbb;
-    margin-top: 0.5rem;
-  }
+ 
 
   @media (max-width: 762px) {
     body {
@@ -163,9 +149,6 @@ body {
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35);
     }
 
-    /* .nav-avatar {
-      display: none;
-    } */
 
     .top-nav .nav-links {
       width: 100%;
@@ -238,10 +221,6 @@ body {
       font-size: 1.1rem;
     }
 
-    .site-footer {
-      position: static;
-      padding: 1.5rem 1rem;
-    }
   }
 
 
