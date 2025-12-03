@@ -90,20 +90,6 @@
   line-height: 1.6;
 }
 
-/* Welcome (Jumbotron Replacement) */
-.welcome-section {
-  text-align: center;
-  padding: 6rem 2rem;
-  background-color: #cacaca;
-}
-.welcome-section h1 {
-  font-size: 3rem;
-  font-weight: 700;
-}
-.welcome-section p {
-  font-size: 1.25rem;
-  color: #555;
-}
 
 @media (max-width: 762px) {
   body {
