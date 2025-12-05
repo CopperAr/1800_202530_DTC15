@@ -12,7 +12,7 @@ Developed for the COMP 1800 course at BCIT, this project demonstrates User-Centr
 
 - **User Authentication**: Secure signup and login with Firebase Authentication
 - **Main Dashboard**: Personalized homepage with quote of the day and friends overview
-- **Friends System**: 
+- **Friends System**:
   - Add friends using their email address
   - Send and receive friend requests
   - View and manage your friends list
@@ -59,11 +59,13 @@ Developed for the COMP 1800 course at BCIT, this project demonstrates User-Centr
    ```
 
    This will install all required packages including:
+
    - `firebase` - Firebase SDK for authentication and Firestore
    - `bootstrap` - UI framework
    - `vite` - Build tool
 
 3. **Configure Firebase**:
+
    - Update `src/firebaseConfig.js` with your Firebase project credentials
    - Set up Firestore security rules (see Firebase Setup section below)
 
@@ -100,27 +102,27 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // Friendships collection
     match /friendships/{friendshipId} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.fromUserId || 
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.fromUserId ||
          request.auth.uid == resource.data.toUserId);
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.fromUserId;
-      allow update, delete: if request.auth != null && 
-        (request.auth.uid == resource.data.fromUserId || 
+      allow update, delete: if request.auth != null &&
+        (request.auth.uid == resource.data.fromUserId ||
          request.auth.uid == resource.data.toUserId);
     }
-    
+
     // Events collection
     match /events/{eventId} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && 
+      allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.userId;
     }
-    
+
     // Quotes collection (read-only for all authenticated users)
     match /quotes/{quoteId} {
       allow read: if request.auth != null;
@@ -134,12 +136,14 @@ service cloud.firestore {
 The app expects these collections in your Firestore database:
 
 1. **users**: User profile data
+
    - `displayName` (string)
    - `email` (string)
    - `pronouns` (string)
    - `city` (string)
 
 2. **friendships**: Friend relationships
+
    - `fromUserId` (string)
    - `toUserId` (string)
    - `pairKey` (string) - canonical key for duplicate prevention
@@ -148,32 +152,48 @@ The app expects these collections in your Firestore database:
    - `updatedAt` (timestamp)
 
 3. **events**: User calendar events
+
    - `userId` (string)
    - `title` (string)
    - `description` (string)
    - `startTime` (timestamp)
    - `endTime` (timestamp)
 
-4. **quotes** (optional): Daily motivational quotes
+4. **hangouts**: User planned hangouts
+
+   - `createdAt` (timestamp)
+   - `date` (string)
+   - `description` (string)
+   - `startTime` (timestamp)
+   - `endTime` (timestamp)
+   - `location` (string)
+   - `participants` (array)
+   - `status` (string)
+   - `title` (string)
+   - `userID` (string)
+
+5. **quotes** (optional): Daily motivational quotes
    - `text` (string)
-   - `author` (string)
 
 ---
 
 ## Usage Guide
 
 ### 1. Authentication
+
 - Navigate to the landing page (`index.html`)
 - Click "Sign Up" to create a new account or "Log In" with existing credentials
 - All features require authentication
 
 ### 2. Main Dashboard
+
 - After login, you'll see your personalized dashboard (`main.html`)
 - View quote of the day
 - See a preview of your friends (up to 5)
 - Quick access to add friends or import contacts
 
 ### 3. Friends Feature
+
 - Visit the Friends page from the navigation bar
 - **Add a friend**: Enter their email address and click "Add Friend"
 - **Manage requests**: Accept or reject incoming friend requests
@@ -181,16 +201,21 @@ The app expects these collections in your Firestore database:
 - The system automatically prevents duplicate friendships using canonical pairing
 
 ### 4. Schedule
+
 - Access the Schedule page to view your calendar
+- View your friends' calendars by toggling view
 - Create new events with title, description, start and end times
 - Edit or delete existing events
 
 ### 5. Hangouts
-- Browse curated hangout locations and trails
-- View location details, difficulty ratings, and images
+
+- View upcoming and previous hangouts
+- Create a new hangout
 
 ### 6. Profile
+
 - View your account information
+- Update your name, pronouns, and/or city
 - Copy your email to share with friends
 - Sign out from your account
 
@@ -208,7 +233,6 @@ The app expects these collections in your Firestore database:
 │   ├── authentication.js          # Firebase auth helper functions
 │   ├── firebaseConfig.js          # Firebase initialization
 │   ├── friends.js                 # Friends feature logic (add, accept, display)
-│   ├── generateFriendCode.js      # Friend code utilities
 │   ├── hangout.js                 # Hangout discovery page logic
 │   ├── loginSignup.js             # Login/signup page logic
 │   ├── main.js                    # Dashboard logic and friends preview
@@ -217,6 +241,7 @@ The app expects these collections in your Firestore database:
 ├── styles/
 │   └── style.css                  # Global styles and theme
 ├── images/                        # Static image assets
+│   └── nav.jpg                    # Background image for headings
 ├── dist/                          # Production build output
 ├── index.html                     # Landing page
 ├── login.html                     # Login/signup page
@@ -227,6 +252,10 @@ The app expects these collections in your Firestore database:
 ├── schedule.html                  # Calendar page
 ├── package.json                   # Node dependencies
 └── README.md                      # Project documentation
+└── .firebaserc                    # Firebase server setup
+└── firestore.indexes.json         # Firebase server setup
+└── firestore.rules                # Firebase server setup
+└── vite.config.js                 # For building dist folder
 ```
 
 ---
@@ -238,12 +267,14 @@ The app expects these collections in your Firestore database:
 The friends feature uses a **canonical pairKey** approach to prevent duplicate friendships:
 
 1. When user A sends a request to user B, the system:
+
    - Sorts both user IDs alphabetically
-   - Creates a unique `pairKey` (e.g., "uidA__uidB")
+   - Creates a unique `pairKey` (e.g., "uidA\_\_uidB")
    - Checks if a friendship with this `pairKey` already exists
    - Creates new document only if it doesn't exist
 
 2. When displaying friends:
+
    - Two queries fetch friendships where user is sender OR receiver
    - Results are deduplicated using a Map keyed by friend's UID
    - Ensures each friend appears only once in the UI
@@ -256,6 +287,7 @@ The friends feature uses a **canonical pairKey** approach to prevent duplicate f
 ### Real-time Updates
 
 The app uses Firestore `onSnapshot` listeners for:
+
 - Friend requests (automatic UI updates when requests arrive)
 - Friends list (live updates when friends are added/removed)
 - Events/schedule (calendar updates in real-time)
@@ -279,17 +311,14 @@ The app uses Firestore `onSnapshot` listeners for:
   - Group chat and messaging
   - Notifications for friend requests and events
 - **Schedule**:
-  - Shared calendars with friends
   - Suggest overlapping free times for hangouts
   - Event reminders
 - **Hangouts**:
   - Map view with location pins
-  - Filtering by category, difficulty, distance
   - User-submitted hangout locations
   - Reviews and ratings
 - **General**:
   - Dark mode toggle
-  - Progressive Web App (PWA) support
   - Push notifications
   - Multi-language support
 
