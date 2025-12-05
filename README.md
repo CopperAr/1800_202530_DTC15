@@ -256,6 +256,8 @@ The app expects these collections in your Firestore database:
 └── firestore.indexes.json         # Firebase server setup
 └── firestore.rules                # Firebase server setup
 └── vite.config.js                 # For building dist folder
+└── .env                           # Environment variables
+└── .env.production                # Environment variables for production
 └── README.md                      # Project documentation
 ```
 
