@@ -242,7 +242,7 @@ The app expects these collections in your Firestore database:
 │   └── style.css                  # Global styles and theme
 ├── images/                        # Static image assets
 │   └── nav.jpg                    # Background image for headings
-├── dist/                          # Production build output
+├── dist/                          # Production build output (To build: npm run build)
 ├── index.html                     # Landing page
 ├── login.html                     # Login/signup page
 ├── main.html                      # Main dashboard
@@ -251,11 +251,12 @@ The app expects these collections in your Firestore database:
 ├── profile.html                   # User profile page
 ├── schedule.html                  # Calendar page
 ├── package.json                   # Node dependencies
-└── README.md                      # Project documentation
+└── .gitignore                     # Lists files/folders not tracked by git
 └── .firebaserc                    # Firebase server setup
 └── firestore.indexes.json         # Firebase server setup
 └── firestore.rules                # Firebase server setup
 └── vite.config.js                 # For building dist folder
+└── README.md                      # Project documentation
 ```
 
 ---
